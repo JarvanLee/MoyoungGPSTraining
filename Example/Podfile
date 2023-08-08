@@ -1,0 +1,13 @@
+use_frameworks!
+
+platform :ios, '10.0'
+
+target 'MoyoungGPSTraining_Example' do
+  pod 'MoyoungGPSTraining', :path => '../'
+
+  target 'MoyoungGPSTraining_Tests' do
+    inherit! :search_paths
+
+    
+  end
+end
