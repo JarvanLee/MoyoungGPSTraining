@@ -22,6 +22,18 @@
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>location your city to obtaining the current weather.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>location your city to obtaining the current weather.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>location your city to obtaining the current weather.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>是否允许App访问您的运动和健身</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
