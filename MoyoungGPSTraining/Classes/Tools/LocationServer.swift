@@ -12,7 +12,7 @@ public class LocationServer: NSObject {
     
     static let shared = LocationServer()
     
-    static let distanceFilter: Double = 2
+    static let distanceFilter: Double = 1.0
     static let GPSHorizontalAccuracy: Double = 20.0
     
     let locationManager = CLLocationManager()

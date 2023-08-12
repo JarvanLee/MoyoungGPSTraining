@@ -14,26 +14,6 @@ public enum RunState {
     case stop
 }
 
-public protocol RunnerDelegate: NSObjectProtocol {
-    
-    /// 在运行中每秒调一次
-    func runner(_ runner: Runner, didUpdateRun run: Run)
-    
-    func runner(_ runner: Runner, didUpdateGoalProgress progress: Progress)
-    
-    func runner(_ runner: Runner, didUpdateLocations locations: [CLLocation])
-    func runner(_ runner: Runner, didUpdateLocationHeading heading: CLHeading)
-    func runner(_ runner: Runner, didUpdateLocationAccuracy accuracy: Double)
-}
-
-public extension RunnerDelegate {
-    func runner(_ runner: Runner, didUpdateGoalProgress progress: Progress) {}
-    
-    func runner(_ runner: Runner, didUpdateLocations locations: [CLLocation]) {}
-    func runner(_ runner: Runner, didUpdateLocationHeading newHeading: CLHeading) {}
-    func runner(_ runner: Runner, didUpdateLocationAccuracy accuracy: Double) {}
-}
-
 public enum RunGoalType {
     case none
     case distance(goal: Double)

@@ -4,4 +4,5 @@ platform :ios, '10.0'
 
 target 'MoyoungGPSTraining_Example' do
   pod 'MoyoungGPSTraining', :path => '../'
+#  pod 'MoyoungGPSTraining' , :git => 'git@codeup.aliyun.com:5f53a99c6207a1a8b17fadc3/MoyoungGPSTraining.git', :tag => '0.0.1'
 end
