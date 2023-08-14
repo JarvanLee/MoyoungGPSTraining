@@ -16,14 +16,14 @@ public protocol RunnerDelegate: NSObjectProtocol {
     func runner(_ runner: Runner, didUpdateGoalProgress progress: Progress)
     
     func runner(_ runner: Runner, didUpdateLocations locations: [CLLocation])
-    func runner(_ runner: Runner, didUpdateLocationHeading heading: CLHeading)
-    func runner(_ runner: Runner, didUpdateLocationAccuracy accuracy: Double)
+    func runner(_ runner: Runner, didUpdateHeadingAngle angle: Double)
+    func runner(_ runner: Runner, didUpdateSignalLevel level: GPSTrainingLocationSignalRange)
 }
 
 public extension RunnerDelegate {
     func runner(_ runner: Runner, didUpdateGoalProgress progress: Progress) {}
     
     func runner(_ runner: Runner, didUpdateLocations locations: [CLLocation]) {}
-    func runner(_ runner: Runner, didUpdateLocationHeading newHeading: CLHeading) {}
-    func runner(_ runner: Runner, didUpdateLocationAccuracy accuracy: Double) {}
+    func runner(_ runner: Runner, didUpdateHeadingAngle angle: Double) {}
+    func runner(_ runner: Runner, didUpdateSignalLevel level: GPSTrainingLocationSignalRange) {}
 }

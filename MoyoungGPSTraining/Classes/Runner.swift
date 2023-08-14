@@ -16,8 +16,11 @@ public enum RunState {
 
 public enum RunGoalType {
     case none
+    // 单位米
     case distance(goal: Double)
+    // 单位秒
     case time(goal: TimeInterval)
+    
     case pace(goal: Double)
     case calorise(goal: Int)
 }
@@ -67,24 +70,6 @@ open class Runner: NSObject {
     
     public override init() {
         super.init()
-        NotificationCenter.default.addObserver(forName: .locationsUpdate, object: nil, queue: OperationQueue.main) { [weak self] notification in
-            guard let `self` = self else { return }
-            if let locations = notification.object as? [CLLocation] {
-                self.delegate?.runner(self, didUpdateLocations: locations)
-            }
-        }
-        NotificationCenter.default.addObserver(forName: .locationHeadUpdate, object: nil, queue: OperationQueue.main) { [weak self] notification in
-            guard let `self` = self else { return }
-            if let heading = notification.object as? CLHeading {
-                self.delegate?.runner(self, didUpdateLocationHeading: heading)
-            }
-        }
-        NotificationCenter.default.addObserver(forName: .gpsAccuracyUpdate, object: nil, queue: OperationQueue.main) { [weak self] notification in
-            guard let `self` = self else { return }
-            if let accuracy = notification.object as? Double {
-                self.delegate?.runner(self, didUpdateLocationAccuracy: accuracy)
-            }
-        }
     }
 }
 
@@ -113,6 +98,18 @@ extension Runner {
             self?.run.currentHeart = value
             self?.currentHearts.append(value)
         }
+        provider.locationsHander = { [weak self] value in
+            guard let `self` = self else { return }
+            self.delegate?.runner(self, didUpdateLocations: value)
+        }
+        provider.locationSingleHandler = { [weak self] value in
+            guard let `self` = self else { return }
+            self.delegate?.runner(self, didUpdateSignalLevel: value)
+        }
+        provider.headingAngleHandler = { [weak self] value in
+            guard let `self` = self else { return }
+            self.delegate?.runner(self, didUpdateHeadingAngle: value)
+        }
     }
     
     public func start() {
@@ -133,7 +130,6 @@ extension Runner {
         self.runState = .stop
         provider?.stop()
         
-        let lastDistance = totalDistance - Double(self.speedArray.count)
         let lastTime = totalTime - self.speedArray.reduce(0, +)
         self.speedArray.append(lastTime)
         

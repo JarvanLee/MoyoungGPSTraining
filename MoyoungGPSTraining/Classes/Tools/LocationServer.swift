@@ -8,6 +8,7 @@
 import Foundation
 import CoreLocation
 
+/*
 public class LocationServer: NSObject {
     
     static let shared = LocationServer()
@@ -97,4 +98,4 @@ extension LocationServer: CLLocationManagerDelegate {
         }
         return true
     }
-}
+}*/

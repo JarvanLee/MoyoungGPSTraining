@@ -47,7 +47,7 @@ class MapViewController: UIViewController {
         super.viewDidLoad()
         
         runner.delegate = self
-        let provider = GpsProvider()
+        let provider = GpsProvider(traningType: .gps_Run)
         NotificationCenter.default.addObserver(forName: Notification.Name("Step"), object: nil, queue: nil) { notication in
             if let step = notication.object as? Int {
                 provider.stepsHandler?(step)
@@ -87,7 +87,7 @@ class MapViewController: UIViewController {
             paceUnitLabel = info2SubLabel
             kcalLabel = info3Label
             kcalUnitLable = info3SubLabel
-            goalSubText = "千米"
+            goalSubText = "米"
         case .distance(let goal):
             distanceLabel = goalLabel
             distanceUnitLable = nil
@@ -98,7 +98,7 @@ class MapViewController: UIViewController {
             kcalLabel = info3Label
             kcalUnitLable = info3SubLabel
             
-            goalSubText = "/ \(String(format: "%.2f",goal))" + " " + "千米"
+            goalSubText = "/ \(goal)" + " " + "米"
         case .time(let goal):
             distanceLabel = info1Label
             distanceUnitLable = info1SubLabel
@@ -144,7 +144,7 @@ class MapViewController: UIViewController {
         goalSubLabel.text = goalSubText
         
         distanceLabel?.text = "0.00"
-        distanceUnitLable?.text = "公里"
+        distanceUnitLable?.text = "米"
         timeLabel?.text = "00:00:00"
         timeUnitLabel?.text = "总时间"
         paceLabel?.text = "00’00’’"
@@ -154,7 +154,7 @@ class MapViewController: UIViewController {
     }
     
     @IBAction func gpsClick(_ sender: Any) {
-        runner.setProvider(GpsProvider())
+        runner.setProvider(GpsProvider(traningType: .gps_Run))
     }
     
     @IBAction func jbqClick(_ sender: Any) {
@@ -216,8 +216,7 @@ extension MapViewController: RunnerDelegate {
     func runner(_ runner: Runner, didUpdateRun run: Run) {
         paceLabel?.text = "\(run.getAverageSpeed)"
         
-        let km = Double(Double(run.totalDistance)*10/1000)/10.0
-        distanceLabel?.text = String(format: "%.2f",km)
+        distanceLabel?.text = "\(run.totalDistance)"
         
         let runTime = Int(run.totalValidDuration)
         let timeStr = String(format: "%02d:%02d:%02d", runTime / 3600, (runTime / 60)%60, runTime % 60)
@@ -230,20 +229,13 @@ extension MapViewController: RunnerDelegate {
     
     func runner(_ runner: Runner, didUpdateLocations locations: [CLLocation]) {
         if let last = locations.last {
-            let coordinate = CoordinateTool.transformFormWGSToGCJ(last.coordinate)
-            self.coordinateArray.append(coordinate)
+            self.coordinateArray.append(last.coordinate)
             updatePath()
         }
     }
     
-    func runner(_ runner: Runner, didUpdateLocationHeading newHeading: CLHeading) {
-        if newHeading.headingAccuracy < 0{
-            return
-        }else {
-            let heading = newHeading.trueHeading > 0 ? newHeading.trueHeading : newHeading.magneticHeading
-            let rotation = heading/180 * .pi
-            self.userAnnotationView?.transform = CGAffineTransform(rotationAngle: CGFloat(rotation))
-        }
+    func runner(_ runner: Runner, didUpdateHeadingAngle angle: Double) {
+        self.userAnnotationView?.transform = CGAffineTransform(rotationAngle: CGFloat(angle))
     }
     
     func updatePath() {
@@ -253,59 +245,8 @@ extension MapViewController: RunnerDelegate {
         let polyline = MKPolyline(coordinates: &self.coordinateArray, count: Int(UInt(self.coordinateArray.count)))
         self.mapView.add(polyline)
         
-        let lastCoord = self.coordinateArray[self.coordinateArray.count - 1]
-        self.mapView.centerCoordinate = lastCoord
-    }
-}
-
-enum CoordinateTool {
-
-    public static let π: Double = CGFloat.pi
-    public static let ee: Double = 0.00669342162296594323
-    public static let a: Double = 6378245.0
-    
-    public static func transformFormWGSToGCJ(_ wgsLoc: CLLocationCoordinate2D) -> CLLocationCoordinate2D {
-        var gcjLoc: CLLocationCoordinate2D = CLLocationCoordinate2D()
-        if isLocationOutOfChina(wgsLoc) {
-            gcjLoc = wgsLoc
-        } else {
-            var adjustLat: Double = transformLat(x: wgsLoc.longitude - 105.0, y: wgsLoc.latitude - 35.0)
-            var adjustLon: Double = transformLon(x: wgsLoc.longitude - 105.0, y: wgsLoc.latitude - 35.0)
-            let radLat = wgsLoc.latitude / 180.0 * π
-            var magic = sin(radLat)
-            magic = 1 - ee * magic * magic
-            let sqrtMagic: Double = sqrt(magic)
-            adjustLat = (adjustLat * 180.0) / ((a * (1 - ee)) / (magic * sqrtMagic) * π)
-            adjustLon = (adjustLon * 180.0) / (a / sqrtMagic * cos(radLat) * π)
-            gcjLoc.longitude = wgsLoc.longitude + adjustLon
-            gcjLoc.latitude = wgsLoc.latitude + adjustLat
+        if let lastCoord = self.coordinateArray.last {
+            self.mapView.centerCoordinate = lastCoord
         }
-        return gcjLoc
     }
-
-    public static func transformLat(x: Double, y: Double) -> Double {
-        let tempSqrtLat = 0.2 * sqrt(abs(x))
-        var lat: Double = -100.0 + 2.0 * x + 3.0 * y + 0.2 * y * y + 0.1 * x * y + tempSqrtLat
-        lat += (20.0 * sin(6.0 * x * π) + 20.0 * sin(2.0 * x * π)) * 2.0 / 3.0
-        lat += (20.0 * sin(y * π) + 40.0 * sin(y / 3.0 * π)) * 2.0 / 3.0
-        lat += (160.0 * sin(y / 12.0 * π) + 320 * sin(y * π / 30.0)) * 2.0 / 3.0
-        return lat
-    }
-
-    public static func transformLon(x: Double, y: Double) -> Double {
-        let tempSqrtLon = 0.1 * sqrt(abs(x))
-        var lon: Double = 300.0 + x + 2.0 * y + 0.1 * x * x + 0.1 * x * y + tempSqrtLon
-        lon += (20.0 * sin(6.0 * x * π) + 20.0 * sin(2.0 * x * π)) * 2.0 / 3.0
-        lon += (20.0 * sin(x * π) + 40.0 * sin(x / 3.0 * π)) * 2.0 / 3.0
-        lon += (150.0 * sin(x / 12.0 * π) + 300.0 * sin(x / 30.0 * π)) * 2.0 / 3.0
-        return lon
-    }
-
-    public static func isLocationOutOfChina(_ location: CLLocationCoordinate2D) -> Bool {
-        if location.longitude<72.004 || location.longitude>137.8347 || location.latitude<0.8293 || location.latitude>55.8271 {
-            return true
-        }
-        return false
-    }
-
 }

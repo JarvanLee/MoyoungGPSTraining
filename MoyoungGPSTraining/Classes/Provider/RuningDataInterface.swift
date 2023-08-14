@@ -8,21 +8,25 @@
 import Foundation
 import CoreLocation
 
-
-
 public typealias IntHandler = ((_ value: Int) -> Void)
 public typealias DoubleHandler = ((_ value: Double) -> Void)
 public typealias LocationsHandler = ((_ value: [CLLocation]) -> Void)
+public typealias LocationSingleHandler = ((_ value: GPSTrainingLocationSignalRange) -> Void)
 
 public typealias RuningProvider = RuningDataInterface
 
 public protocol RuningDataInterface: NSObjectProtocol {
     
-    var stepsHandler: IntHandler? { get set }
     var distanceHandler: DoubleHandler? { get set }
-    var calorieHandler: IntHandler? { get set }
     var speedHandler: DoubleHandler? { get set }
+    
+    var stepsHandler: IntHandler? { get set }
+    var calorieHandler: IntHandler? { get set }
     var heartHandler: IntHandler? { get set }
+    
+    var locationsHander: LocationsHandler? {get set}
+    var headingAngleHandler: DoubleHandler? {get set}
+    var locationSingleHandler: LocationSingleHandler? {get set}
     
     func calculateElevation() -> Double
     

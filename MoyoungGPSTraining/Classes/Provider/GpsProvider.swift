@@ -9,55 +9,79 @@ import Foundation
 import CoreLocation
 
 open class GpsProvider: NSObject, RuningDataInterface {
-    
     public var stepsHandler: IntHandler?
-    
-    public var distanceHandler: DoubleHandler?
     
     public var calorieHandler: IntHandler?
     
+    public var heartHandler: IntHandler?
+    
+    public var locationsHander: LocationsHandler?
+    
+    public var headingAngleHandler: DoubleHandler?
+    
+    public var locationSingleHandler: LocationSingleHandler?
+
+    public var distanceHandler: DoubleHandler?
+    
     public var speedHandler: DoubleHandler?
     
-    public var heartHandler: IntHandler?
+    let locationManager = GPSTrainingLocationManager()
+    var locations: [CLLocation] = []
 
-    public override init() {
+    let traningType: TrainingType
+    
+    public init(traningType: TrainingType) {
+        self.traningType = traningType
         super.init()
-        NotificationCenter.default.addObserver(forName: .locationsUpdate, object: nil, queue: OperationQueue.main) { [weak self] notification in
+        
+        locationManager.locationsUpdateHandler = { [weak self] location in
             guard let `self` = self else { return }
-            if let locations = notification.object as? [CLLocation] {
-                var distance: CLLocationDistance = 0
-                if locations.count > 1 {
-                    var currentLocation: CLLocation? = nil
-                    for location in locations {
-                        if currentLocation != nil {
-                            distance += location.distance(from: currentLocation!)
-                        }
-                        currentLocation = location
-                    }
-                }
-                self.distanceHandler?(distance)
-                
-                if let location = locations.last, location.speed > 0 {
-                    self.speedHandler?(location.speed)
-                }
-            }
+            self.locations.append(location)
+            self.syncData()
+            self.locationsHander?(self.locations)
+        }
+        locationManager.headingAngleUpdateHandler = { [weak self] angle in
+            guard let `self` = self else { return }
+            self.headingAngleHandler?(angle)
+        }
+        locationManager.signalAccuracyUpdateHandler = { [weak self] signal in
+            guard let `self` = self else { return }
+            self.locationSingleHandler?(signal)
         }
     }
     
     public func start() {
-        LocationServer.shared.startUpdate()
+        locationManager.startUpdating()
     }
     
     public func pause() {
-        LocationServer.shared.pauseUpdate()
+        locationManager.pauseUpdating()
     }
     
     public func stop() {
-        LocationServer.shared.stopUpdate()
+        locationManager.stopUpdating()
     }
-  
+    
     public func calculateElevation() -> Double {
         return 0
+    }
+    
+    private func syncData() {
+        var distance: CLLocationDistance = 0
+        if locations.count > 1 {
+            var currentLocation: CLLocation? = nil
+            for location in locations {
+                if currentLocation != nil {
+                    distance += location.distance(from: currentLocation!)
+                }
+                currentLocation = location
+            }
+        }
+        self.distanceHandler?(distance)
+        
+        if let location = locations.last, location.speed > 0 {
+            self.speedHandler?(location.speed)
+        }
     }
 }
 

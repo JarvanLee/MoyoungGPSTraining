@@ -36,7 +36,7 @@ open class Run: NSObject {
         guard totalDistance > 0 else {
             return 0
         }
-        return totalValidDuration / 60 / totalDistance / 1000
+        return totalValidDuration / totalDistance
     }
     
     /// 每公里耗时
