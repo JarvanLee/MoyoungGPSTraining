@@ -10,6 +10,7 @@ import CoreLocation
 
 public typealias IntHandler = ((_ value: Int) -> Void)
 public typealias DoubleHandler = ((_ value: Double) -> Void)
+public typealias DoubleListHandler = ((_ value: [Double]) -> Void)
 public typealias LocationsHandler = ((_ value: [CLLocation]) -> Void)
 public typealias LocationSingleHandler = ((_ value: GPSTrainingLocationSignalRange) -> Void)
 
@@ -27,6 +28,8 @@ public protocol RuningDataInterface: NSObjectProtocol {
     var locationsHander: LocationsHandler? {get set}
     var headingAngleHandler: DoubleHandler? {get set}
     var locationSingleHandler: LocationSingleHandler? {get set}
+    
+    var altitudeListHandler: DoubleListHandler? {get set}
     
     func calculateElevation() -> Double
     

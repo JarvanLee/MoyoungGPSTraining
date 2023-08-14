@@ -25,6 +25,8 @@ open class GpsProvider: NSObject, RuningDataInterface {
     
     public var speedHandler: DoubleHandler?
     
+    public var altitudeListHandler: DoubleListHandler?
+    
     let locationManager = GPSTrainingLocationManager()
     var locations: [CLLocation] = []
 
@@ -39,6 +41,7 @@ open class GpsProvider: NSObject, RuningDataInterface {
             self.locations.append(location)
             self.syncData()
             self.locationsHander?(self.locations)
+            self.altitudeListHandler?(self.locations.map{ $0.altitude })
         }
         locationManager.headingAngleUpdateHandler = { [weak self] angle in
             guard let `self` = self else { return }
@@ -63,7 +66,49 @@ open class GpsProvider: NSObject, RuningDataInterface {
     }
     
     public func calculateElevation() -> Double {
-        return 0
+        var elevation: Double = 0
+        
+        if locations.count < 2 {
+            return elevation
+        }
+        
+        var minLocation: CLLocation?
+        var maxLocation: CLLocation?
+        
+        for i in 1 ..< (locations.count - 1) {
+            
+            let last = locations[i - 1]
+            let current = locations[i]
+            let next = locations[i + 1]
+            
+            if current.altitude >= last.altitude && current.altitude > next.altitude {
+                maxLocation = current
+            }
+            // 最后一个还是上坡
+            if i == locations.count - 2 && current.altitude < next.altitude {
+                maxLocation = next
+            }
+            
+            if current.altitude <= last.altitude && current.altitude < next.altitude {
+                minLocation = current
+            }
+            
+            // 第一段是下坡
+            if i == 1 && current.altitude > last.altitude {
+                minLocation = last
+            }
+            
+            if let max = maxLocation, let min = minLocation {
+                
+                let d = max.altitude - min.altitude
+                if min.altitude < max.altitude && d < 2.0 {
+                    elevation += d
+                }
+                maxLocation = nil
+                minLocation = nil
+            }
+        }
+        return elevation
     }
     
     private func syncData() {

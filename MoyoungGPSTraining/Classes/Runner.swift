@@ -58,7 +58,7 @@ open class Runner: NSObject {
     private var lastMinDistance = 0.0
     private var currentHearts: [Int] = []
     private let goalProgress = Progress()
-    
+    private var altitudeArray: [Double] = []
     private var speedArray:[TimeInterval] = []
     
     private var totalTime: TimeInterval {
@@ -92,11 +92,18 @@ extension Runner {
             self?.run.currentSpeed = value
         }
         provider.heartHandler = { [weak self] value in
+            guard let `self` = self else { return }
             guard value > 0 && value < 255 else {
                 return
             }
-            self?.run.currentHeart = value
-            self?.currentHearts.append(value)
+            self.run.currentHeart = value
+            self.run.maxHeart = max(value, self.run.maxHeart ?? 0)
+            self.run.minHeart = min(value, self.run.minHeart ?? 255)
+            self.currentHearts.append(value)
+        }
+        provider.altitudeListHandler = {[weak self] value in
+            guard let `self` = self else { return }
+            self.altitudeArray = value
         }
         provider.locationsHander = { [weak self] value in
             guard let `self` = self else { return }
@@ -110,6 +117,7 @@ extension Runner {
             guard let `self` = self else { return }
             self.delegate?.runner(self, didUpdateHeadingAngle: value)
         }
+
     }
     
     public func start() {
@@ -130,14 +138,14 @@ extension Runner {
         self.runState = .stop
         provider?.stop()
         
-        let lastTime = totalTime - self.speedArray.reduce(0, +)
-        self.speedArray.append(lastTime)
+        timer?.invalidate()
+        timer = nil
         
-        self.timer?.invalidate()
-        self.timer = nil
-        
-        self.dealMinuteData()
-        self.delegate?.runner(self, didUpdateRun: run)
+        dealMinuteData()
+        calculateOneKmUseTime()
+        calculateReatTimeElevation()
+        stopedCalculate()
+        delegate?.runner(self, didUpdateRun: run)
     }
 }
 
@@ -156,10 +164,30 @@ extension Runner {
             run.totalValidDuration += 1
             dealGoalProgress()
             calculateOneKmUseTime()
-            self.delegate?.runner(self, didUpdateRun: run)
+            calculateReatTimeElevation()
+            delegate?.runner(self, didUpdateRun: run)
         default:
             break
         }
+        
+    }
+    
+    /// 处理每分钟数据
+    private func dealMinuteData() {
+        let pastMinSteps = run.totalStep - lastMinSteps
+        run.stepsPerMinute.append(Int(pastMinSteps))
+        
+        let pastMinDistance = run.totalDistance - lastMinDistance
+        run.distancePerMinute.append(pastMinDistance)
+        
+        let hearts = currentHearts.filter { $0 > 0 && $0 < 255 }
+        if hearts.count > 0 {
+            run.heartPerMinute.append(hearts.reduce(0, { $0 + $1 }) / hearts.count)
+        }
+        
+        lastMinSteps = run.totalStep
+        lastMinDistance = run.totalDistance
+        currentHearts = []
     }
     
     /// 处理目标进度
@@ -192,26 +220,6 @@ extension Runner {
         self.delegate?.runner(self, didUpdateGoalProgress: self.goalProgress)
     }
     
-    /// 处理每分钟数据
-    private func dealMinuteData() {
-        let pastMinSteps = run.totalStep - lastMinSteps
-        run.minSteps.append(Int(pastMinSteps))
-        
-        let pastMinDistance = run.totalDistance - lastMinDistance
-        run.minDistance.append(pastMinDistance)
-        
-        let hearts = currentHearts.filter { $0 > 0 && $0 < 255 }
-        if hearts.count > 0 {
-            run.minHeart.append(hearts.reduce(0, { $0 + $1 }) / hearts.count)
-        }
-  
-        run.elevation = self.provider?.calculateElevation() ?? 0.0
-        
-        lastMinSteps = run.totalStep
-        lastMinDistance = run.totalDistance
-        currentHearts = []
-    }
-    
     /// 计算每公里耗时
     private func calculateOneKmUseTime() {
         // 有新的一公里，添加时间
@@ -226,6 +234,26 @@ extension Runner {
             }
             speedArray.append(newTime)
             run.timeForKilometer = speedArray
+        } else {
+            if runState == .stop {
+                let lastTime = totalTime - self.speedArray.reduce(0, +)
+                self.speedArray.append(lastTime)
+                run.timeForKilometer = speedArray
+            }
         }
+    }
+    
+    /// 计算实时海拔(每10秒一个数据)
+    private func calculateReatTimeElevation() {
+        if Int(run.totalValidDuration) % 10 == 0 || runState == .stop {
+            if let last = altitudeArray.last {
+                run.realTimeElevation.append(last)
+            }
+        }
+    }
+    
+    /// 运动结束时需要计算的一些数据
+    private func stopedCalculate() {
+        run.climbingHeight = self.provider?.calculateElevation() ?? 0.0
     }
 }

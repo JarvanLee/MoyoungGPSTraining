@@ -53,7 +53,6 @@ class MapViewController: UIViewController {
                 provider.stepsHandler?(step)
             }
         }
-        runner.setProvider(PedometerProvider())
         runner.setProvider(provider)
         runner.goal = self.goalType
      

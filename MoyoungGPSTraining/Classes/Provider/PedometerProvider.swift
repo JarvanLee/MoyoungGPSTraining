@@ -27,6 +27,8 @@ open class PedometerProvider: NSObject, RuningDataInterface {
     
     public var heartHandler: IntHandler?
     
+    public var altitudeListHandler: DoubleListHandler?
+    
     public func calculateElevation() -> Double {
         return 0
     }

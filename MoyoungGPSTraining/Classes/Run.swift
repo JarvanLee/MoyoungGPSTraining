@@ -18,19 +18,25 @@ open class Run: NSObject {
     /// 有效时间
     public var totalValidDuration: TimeInterval = 0
     /// 累计爬升
-    public var elevation: Double = 0.0
+    public var climbingHeight: Double = 0.0
     
     /// 每分钟步数
-    public var minSteps: [Int] = []
+    public var stepsPerMinute: [Int] = []
     /// 每分钟距离
-    public var minDistance: [Double] = []
+    public var distancePerMinute: [Double] = []
+    
     /// 每分钟心率数
-    public var minHeart: [Int] = []
+    public var heartPerMinute: [Int] = []
+    /// 当前心率
+    public var currentHeart: Int = 0
+    /// 最大心率
+    public var maxHeart: Int?
+    /// 最小心率
+    public var minHeart: Int?
     
     /// 当前配速
     public var currentSpeed: Double = 0.0
-    /// 当前心率
-    public var currentHeart: Int = 0
+
     /// 平均配速
     public var getAverageSpeed: Double {
         guard totalDistance > 0 else {
@@ -41,4 +47,7 @@ open class Run: NSObject {
     
     /// 每公里耗时
     public var timeForKilometer: [TimeInterval] = []
+    
+    /// 实时海拔(10秒一个数据)
+    public var realTimeElevation: [Double] = []
 }
