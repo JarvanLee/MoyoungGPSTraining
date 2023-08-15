@@ -46,7 +46,7 @@ open class Runner: NSObject {
         }
     }
     
-    private(set) var runState: RunState = .stop
+    public private(set) var runState: RunState = .stop
     
     private let run = Run()
     
