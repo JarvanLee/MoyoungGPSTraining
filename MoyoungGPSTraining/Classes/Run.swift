@@ -8,7 +8,6 @@
 import Foundation
 
 open class Run: NSObject {
-    
     /// 总步数
     public var totalStep: Int = 0
     /// 总卡路里

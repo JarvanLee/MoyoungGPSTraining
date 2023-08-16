@@ -5,12 +5,11 @@
 //  Created by 李然 on 2023/8/10.
 //
 
-import Foundation
-import CoreMotion
 import CoreLocation
+import CoreMotion
+import Foundation
 
 open class PedometerProvider: NSObject, RuningDataInterface {
-    
     public var locationsHander: LocationsHandler?
     
     public var headingAngleHandler: DoubleHandler?
@@ -53,7 +52,7 @@ open class PedometerProvider: NSObject, RuningDataInterface {
     }
     
     public func start() {
-        if isMapRequird {
+        if self.isMapRequird {
             if self.locationManager == nil {
                 self.locationManager = GPSTrainingLocationManager()
                 self.locationManager?.locationsUpdateHandler = { [weak self] location in
@@ -71,15 +70,14 @@ open class PedometerProvider: NSObject, RuningDataInterface {
                 }
                 self.locationManager?.startUpdating()
             }
-            
         }
-        pedometer.startUpdates(from: Date()) { [weak self] pedometerData, error in
+        self.pedometer.startUpdates(from: Date()) { [weak self] pedometerData, _ in
             guard let `self` = self else { return }
             if let pedometerData = pedometerData {
                 let step = Int(truncating: pedometerData.numberOfSteps)
                 self.totalStpe = self.lastPedemeterStep + step
                 self.totalDistance = self.lastPedemeterDistance + (pedometerData.distance?.doubleValue ?? 0)
-                self.totalCalorie = self.lastPedemeterCalorie + Int((Double(step * 4)/1000).rounded())
+                self.totalCalorie = self.lastPedemeterCalorie + Int((Double(step * 4) / 1000).rounded())
                 self.speedHandler?(pedometerData.currentPace?.doubleValue ?? 0.0)
             }
             self.syncData()
@@ -88,11 +86,11 @@ open class PedometerProvider: NSObject, RuningDataInterface {
     
     public func pause() {
         self.locationManager?.pauseUpdating()
-        pedometer.stopUpdates()
+        self.pedometer.stopUpdates()
         
-        lastPedemeterStep = totalStpe
-        lastPedemeterDistance = totalDistance
-        lastPedemeterCalorie = totalCalorie
+        self.lastPedemeterStep = self.totalStpe
+        self.lastPedemeterDistance = self.totalDistance
+        self.lastPedemeterCalorie = self.totalCalorie
         
         self.syncData()
     }
@@ -100,11 +98,11 @@ open class PedometerProvider: NSObject, RuningDataInterface {
     public func stop() {
         self.locationManager?.stopUpdating()
         self.locationManager = nil
-        pedometer.stopUpdates()
+        self.pedometer.stopUpdates()
         
-        lastPedemeterStep = totalStpe
-        lastPedemeterDistance = totalDistance
-        lastPedemeterCalorie = totalCalorie
+        self.lastPedemeterStep = self.totalStpe
+        self.lastPedemeterDistance = self.totalDistance
+        self.lastPedemeterCalorie = self.totalCalorie
         
         self.syncData()
     }
@@ -114,5 +112,4 @@ open class PedometerProvider: NSObject, RuningDataInterface {
         self.distanceHandler?(self.totalDistance)
         self.calorieHandler?(self.totalCalorie)
     }
-    
 }

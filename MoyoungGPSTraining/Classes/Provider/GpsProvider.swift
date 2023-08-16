@@ -5,8 +5,8 @@
 //  Created by 李然 on 2023/8/9.
 //
 
-import Foundation
 import CoreLocation
+import Foundation
 
 open class GpsProvider: NSObject, RuningDataInterface {
     public var stepsHandler: IntHandler?
@@ -41,7 +41,7 @@ open class GpsProvider: NSObject, RuningDataInterface {
             self.locations.append(location)
             self.syncData()
             self.locationsHander?(self.locations)
-            self.altitudeListHandler?(self.locations.map{ $0.altitude })
+            self.altitudeListHandler?(self.locations.map { $0.altitude })
         }
         locationManager.headingAngleUpdateHandler = { [weak self] angle in
             guard let `self` = self else { return }
@@ -76,7 +76,6 @@ open class GpsProvider: NSObject, RuningDataInterface {
         var maxLocation: CLLocation?
         
         for i in 1 ..< (locations.count - 1) {
-            
             let last = locations[i - 1]
             let current = locations[i]
             let next = locations[i + 1]
@@ -99,7 +98,6 @@ open class GpsProvider: NSObject, RuningDataInterface {
             }
             
             if let max = maxLocation, let min = minLocation {
-                
                 let d = max.altitude - min.altitude
                 if min.altitude < max.altitude && d < 2.0 {
                     elevation += d
@@ -122,11 +120,10 @@ open class GpsProvider: NSObject, RuningDataInterface {
                 currentLocation = location
             }
         }
-        self.distanceHandler?(distance)
+        distanceHandler?(distance)
         
         if let location = locations.last, location.speed > 0 {
-            self.speedHandler?(location.speed)
+            speedHandler?(location.speed)
         }
     }
 }
-

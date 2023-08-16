@@ -5,8 +5,8 @@
 //  Created by 李然 on 2023/8/8.
 //
 
-import Foundation
 import CoreLocation
+import Foundation
 
 public enum RunState {
     case running
@@ -26,8 +26,7 @@ public enum RunGoalType {
 }
 
 open class Runner: NSObject {
-    
-    weak public var delegate: RunnerDelegate?
+    public weak var delegate: RunnerDelegate?
     
     public var goal: RunGoalType = .none {
         didSet {
@@ -35,18 +34,22 @@ open class Runner: NSObject {
             case .none:
                 break
             case .distance(let goal):
-                self.goalProgress.totalUnitCount = Int64(goal)
+                goalProgress.totalUnitCount = Int64(goal)
             case .time(let goal):
-                self.goalProgress.totalUnitCount = Int64(goal)
+                goalProgress.totalUnitCount = Int64(goal)
             case .pace(let goal):
-                self.goalProgress.totalUnitCount = Int64(goal)
+                goalProgress.totalUnitCount = Int64(goal)
             case .calorise(let goal):
-                self.goalProgress.totalUnitCount = Int64(goal)
+                goalProgress.totalUnitCount = Int64(goal)
             }
         }
     }
     
-    public private(set) var runState: RunState = .stop
+    public private(set) var runState: RunState = .stop {
+        didSet {
+            delegate?.runner(self, didUpdateState: runState)
+        }
+    }
     
     private let run = Run()
     
@@ -59,24 +62,25 @@ open class Runner: NSObject {
     private var currentHearts: [Int] = []
     private let goalProgress = Progress()
     private var altitudeArray: [Double] = []
-    private var speedArray:[TimeInterval] = []
+    private var speedArray: [TimeInterval] = []
     
     private var totalTime: TimeInterval {
         return run.totalValidDuration
     }
+
     private var totalDistance: Double {
         return run.totalDistance
     }
     
-    public override init() {
+    override public init() {
         super.init()
     }
 }
 
-//MARK: - 对外方法
-extension Runner {
-    
-    public func setProvider(_ provider: RuningProvider) {
+// MARK: - 对外方法
+
+public extension Runner {
+    func setProvider(_ provider: RuningProvider) {
         self.provider = provider
 
         provider.stepsHandler = { [weak self] value in
@@ -93,7 +97,7 @@ extension Runner {
         }
         provider.heartHandler = { [weak self] value in
             guard let `self` = self else { return }
-            guard value > 0 && value < 255 else {
+            guard value > 0, value < 255 else {
                 return
             }
             self.run.currentHeart = value
@@ -101,7 +105,7 @@ extension Runner {
             self.run.minHeart = min(value, self.run.minHeart ?? 255)
             self.currentHearts.append(value)
         }
-        provider.altitudeListHandler = {[weak self] value in
+        provider.altitudeListHandler = { [weak self] value in
             guard let `self` = self else { return }
             self.altitudeArray = value
         }
@@ -117,25 +121,24 @@ extension Runner {
             guard let `self` = self else { return }
             self.delegate?.runner(self, didUpdateHeadingAngle: value)
         }
-
     }
     
-    public func start() {
-        self.runState = .running
+    func start() {
+        runState = .running
         provider?.start()
         
-        if self.timer == nil {
-            self.timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(timerRun), userInfo: nil, repeats: true)
+        if timer == nil {
+            timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(timerRun), userInfo: nil, repeats: true)
         }
     }
     
-    public func pause() {
-        self.runState = .pause
+    func pause() {
+        runState = .pause
         provider?.pause()
     }
     
-    public func stop() {
-        self.runState = .stop
+    func stop() {
+        runState = .stop
         provider?.stop()
         
         timer?.invalidate()
@@ -149,14 +152,13 @@ extension Runner {
     }
 }
 
+// MARK: - 自定义私有方法
 
-//MARK: - 自定义私有方法
 extension Runner {
     /// 计时器
     @objc private func timerRun() {
-
-        if Int(Date().timeIntervalSince1970)%60 == 0{
-            self.dealMinuteData()
+        if Int(Date().timeIntervalSince1970) % 60 == 0 {
+            dealMinuteData()
         }
         
         switch runState {
@@ -169,7 +171,6 @@ extension Runner {
         default:
             break
         }
-        
     }
     
     /// 处理每分钟数据
@@ -182,7 +183,7 @@ extension Runner {
         
         let hearts = currentHearts.filter { $0 > 0 && $0 < 255 }
         if hearts.count > 0 {
-            run.heartPerMinute.append(hearts.reduce(0, { $0 + $1 }) / hearts.count)
+            run.heartPerMinute.append(hearts.reduce(0) { $0 + $1 } / hearts.count)
         }
         
         lastMinSteps = run.totalStep
@@ -192,32 +193,32 @@ extension Runner {
     
     /// 处理目标进度
     private func dealGoalProgress() {
-        switch self.goal {
-        case .time(_):
-            self.goalProgress.completedUnitCount = Int64(run.totalValidDuration)
-        case .distance(_):
-            self.goalProgress.completedUnitCount = Int64(run.totalDistance)
-        case .calorise(_):
-            self.goalProgress.completedUnitCount = Int64(run.totalCalorie)
+        switch goal {
+        case .time:
+            goalProgress.completedUnitCount = Int64(run.totalValidDuration)
+        case .distance:
+            goalProgress.completedUnitCount = Int64(run.totalDistance)
+        case .calorise:
+            goalProgress.completedUnitCount = Int64(run.totalCalorie)
         case .pace(let goal):
             var vprogress: Double = 0
             let speed = run.getAverageSpeed
-            if speed > 0{
-                vprogress = abs(goal - speed) / (goal*2)
-                if speed < goal{
+            if speed > 0 {
+                vprogress = abs(goal - speed) / (goal * 2)
+                if speed < goal {
                     vprogress += 0.5
-                }else {
+                } else {
                     vprogress = 0.5 - vprogress
-                    if vprogress < 0{
+                    if vprogress < 0 {
                         vprogress = 0
                     }
                 }
             }
-            self.goalProgress.completedUnitCount = Int64(vprogress)
+            goalProgress.completedUnitCount = Int64(vprogress)
         default:
             break
         }
-        self.delegate?.runner(self, didUpdateGoalProgress: self.goalProgress)
+        delegate?.runner(self, didUpdateGoalProgress: goalProgress)
     }
     
     /// 计算每公里耗时
@@ -226,7 +227,7 @@ extension Runner {
         if Int(totalDistance) == speedArray.count + 1 {
             let lastTime = speedArray.reduce(0, +)
             var newTime = totalTime - lastTime
-            let lastDistance =  Double(speedArray.count)
+            let lastDistance = Double(speedArray.count)
             let newDistance = totalDistance - lastDistance
             if newDistance > 1 {
                 let delta = Double(newTime) / (totalDistance - lastDistance) * (totalDistance - lastDistance - 1)
@@ -236,8 +237,8 @@ extension Runner {
             run.timeForKilometer = speedArray
         } else {
             if runState == .stop {
-                let lastTime = totalTime - self.speedArray.reduce(0, +)
-                self.speedArray.append(lastTime)
+                let lastTime = totalTime - speedArray.reduce(0, +)
+                speedArray.append(lastTime)
                 run.timeForKilometer = speedArray
             }
         }
@@ -254,6 +255,6 @@ extension Runner {
     
     /// 运动结束时需要计算的一些数据
     private func stopedCalculate() {
-        run.climbingHeight = self.provider?.calculateElevation() ?? 0.0
+        run.climbingHeight = provider?.calculateElevation() ?? 0.0
     }
 }
