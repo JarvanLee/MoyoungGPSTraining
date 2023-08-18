@@ -12,6 +12,7 @@ public typealias IntHandler = (_ value: Int) -> Void
 public typealias DoubleHandler = (_ value: Double) -> Void
 public typealias DoubleListHandler = (_ value: [Double]) -> Void
 public typealias LocationsHandler = (_ value: [CLLocation]) -> Void
+public typealias LocationsAuthStatusHandler = (_ value: CLAuthorizationStatus) -> Void
 public typealias LocationSingleHandler = (_ value: GPSTrainingLocationSignalRange) -> Void
 
 open class BaseProvider: NSObject {
@@ -24,6 +25,10 @@ open class BaseProvider: NSObject {
     var heartHandler: IntHandler?
     
     //MARK: - GPS相关
+    // 定位权限回调
+    var authorizationStatusHandler: LocationsAuthStatusHandler?
+    // 定位失败回调
+    var locationFailHandler: ((_ error: Error) -> Void)?
     // 定位点
     var locationsHander: LocationsHandler?
     // 定位头角度
@@ -68,6 +73,15 @@ open class BaseProvider: NSObject {
         super.init()
     }
     
+    /// 手动设置心率
+    public func setHeartRate(_ heart: Int) {}
+    
+    /// 手动设置步数
+    public func setSteps(_ steps: Int) {}
+    
+    /// 手动设置卡路里
+    public func setCalorie(_ calorie: Int) {}
+    
     open func start() {
         if self.isGPSRequird {
             if self.locationManager == nil {
@@ -87,6 +101,14 @@ open class BaseProvider: NSObject {
                 self.locationManager?.signalAccuracyUpdateHandler = { [weak self] signal in
                     guard let `self` = self else { return }
                     self.locationSingleHandler?(signal)
+                }
+                self.locationManager?.authorizationStatusHandler = { [weak self] state in
+                    guard let `self` = self else { return }
+                    self.authorizationStatusHandler?(state)
+                }
+                self.locationManager?.locationFailHandler = { [weak self] error in
+                    guard let `self` = self else { return }
+                    self.locationFailHandler?(error)
                 }
                 self.locationManager?.startUpdating()
             }

@@ -35,7 +35,8 @@ open class PedometerProvider: BaseProvider {
     }
     
     /// 手动设置心率
-    public func setHeartRate(_ heart: Int) {
+    public override func setHeartRate(_ heart: Int) {
+        super.setHeartRate(heart)
         self.heartHandler?(heart)
     }
     

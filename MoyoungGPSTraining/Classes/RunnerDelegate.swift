@@ -22,6 +22,10 @@ public protocol RunnerDelegate: NSObjectProtocol {
     func runner(_ runner: Runner, didUpdateHeadingAngle angle: Double)
     /// 更新GPS信号等级
     func runner(_ runner: Runner, didUpdateSignalLevel level: GPSTrainingLocationSignalRange)
+    /// GPS权限回调
+    func runner(_ runner: Runner, didChangeAuthorization state: CLAuthorizationStatus)
+    /// GPS错误
+    func runner(_ runner: Runner, didFailWithError error: Error)
 }
 
 public extension RunnerDelegate {
@@ -30,4 +34,6 @@ public extension RunnerDelegate {
     func runner(_ runner: Runner, didUpdateLocations locations: [CLLocation]) {}
     func runner(_ runner: Runner, didUpdateHeadingAngle angle: Double) {}
     func runner(_ runner: Runner, didUpdateSignalLevel level: GPSTrainingLocationSignalRange) {}
+    func runner(_ runner: Runner, didChangeAuthorization state: CLAuthorizationStatus) {}
+    func runner(_ runner: Runner, didFailWithError error: Error) {}
 }

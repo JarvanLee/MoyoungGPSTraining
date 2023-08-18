@@ -123,7 +123,16 @@ public extension Runner {
             guard let `self` = self else { return }
             self.delegate?.runner(self, didUpdateHeadingAngle: value)
         }
+        provider.authorizationStatusHandler = { [weak self] value in
+            guard let `self` = self else { return }
+            self.delegate?.runner(self, didChangeAuthorization: value)
+        }
+        provider.locationFailHandler = { [weak self] value in
+            guard let `self` = self else { return }
+            self.delegate?.runner(self, didFailWithError: value)
+        }
     }
+    
     
     func start() {
         runState = .running
