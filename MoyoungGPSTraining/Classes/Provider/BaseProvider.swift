@@ -110,8 +110,8 @@ open class BaseProvider: NSObject {
                     guard let `self` = self else { return }
                     self.locationFailHandler?(error)
                 }
-                self.locationManager?.startUpdating()
             }
+            self.locationManager?.startUpdating()
         }
     }
     

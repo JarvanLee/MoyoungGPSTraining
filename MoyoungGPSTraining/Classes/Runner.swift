@@ -51,7 +51,7 @@ open class Runner: NSObject {
         }
     }
     
-    private let run = Run()
+    private var run = Run()
     
     private var provider: BaseProvider?
     
@@ -135,6 +135,9 @@ public extension Runner {
     
     
     func start() {
+        if runState == .stop {
+            reset()
+        }
         runState = .running
         provider?.start()
         
@@ -270,5 +273,16 @@ extension Runner {
     /// 运动结束时需要计算的一些数据
     private func stopedCalculate() {
         run.climbingHeight = provider?.calculateElevation() ?? 0.0
+    }
+    
+    private func reset() {
+        self.run = Run()
+        self.lastMinSteps = 0
+        self.lastMinDistance = 0
+        self.currentHearts = []
+        self.goalProgress.completedUnitCount = 0
+        self.altitudeArray = []
+        self.speedArray = []
+        self.realTimeSpeedArray = []
     }
 }
