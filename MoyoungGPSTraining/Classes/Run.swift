@@ -47,6 +47,9 @@ open class Run: NSObject {
     /// 每公里耗时
     public var timeForKilometer: [TimeInterval] = []
     
+    /// 实时配速(10秒一个数据)
+    public var realTimeSpeed: [Double] = []
+    
     /// 实时海拔(10秒一个数据)
     public var realTimeElevation: [Double] = []
 }

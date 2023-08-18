@@ -53,7 +53,7 @@ open class Runner: NSObject {
     
     private let run = Run()
     
-    private var provider: RuningProvider?
+    private var provider: BaseProvider?
     
     private var timer: Timer?
     
@@ -63,6 +63,7 @@ open class Runner: NSObject {
     private let goalProgress = Progress()
     private var altitudeArray: [Double] = []
     private var speedArray: [TimeInterval] = []
+    private var realTimeSpeedArray: [Double] = []
     
     private var totalTime: TimeInterval {
         return run.totalValidDuration
@@ -80,7 +81,7 @@ open class Runner: NSObject {
 // MARK: - 对外方法
 
 public extension Runner {
-    func setProvider(_ provider: RuningProvider) {
+    func setProvider(_ provider: BaseProvider) {
         self.provider = provider
 
         provider.stepsHandler = { [weak self] value in
@@ -94,6 +95,7 @@ public extension Runner {
         }
         provider.speedHandler = { [weak self] value in
             self?.run.currentSpeed = value
+            self?.realTimeSpeedArray.append(value)
         }
         provider.heartHandler = { [weak self] value in
             guard let `self` = self else { return }
@@ -145,7 +147,7 @@ public extension Runner {
         timer = nil
         
         dealMinuteData()
-        calculateOneKmUseTime()
+        calculateTimePerKilometre()
         calculateReatTimeElevation()
         stopedCalculate()
         delegate?.runner(self, didUpdateRun: run)
@@ -165,7 +167,7 @@ extension Runner {
         case .running:
             run.totalValidDuration += 1
             dealGoalProgress()
-            calculateOneKmUseTime()
+            calculateTimePerKilometre()
             calculateReatTimeElevation()
             delegate?.runner(self, didUpdateRun: run)
         default:
@@ -222,7 +224,7 @@ extension Runner {
     }
     
     /// 计算每公里耗时
-    private func calculateOneKmUseTime() {
+    private func calculateTimePerKilometre() {
         // 有新的一公里，添加时间
         if Int(totalDistance) == speedArray.count + 1 {
             let lastTime = speedArray.reduce(0, +)
@@ -249,6 +251,9 @@ extension Runner {
         if Int(run.totalValidDuration) % 10 == 0 || runState == .stop {
             if let last = altitudeArray.last {
                 run.realTimeElevation.append(last)
+            }
+            if let last = realTimeSpeedArray.last {
+                run.realTimeSpeed.append(last)
             }
         }
     }

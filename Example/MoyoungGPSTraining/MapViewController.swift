@@ -47,13 +47,13 @@ class MapViewController: UIViewController {
         super.viewDidLoad()
         
         runner.delegate = self
-        let provider = GpsProvider(traningType: .gps_Run)
-        NotificationCenter.default.addObserver(forName: Notification.Name("Step"), object: nil, queue: nil) { notication in
-            if let step = notication.object as? Int {
-                provider.stepsHandler?(step)
-            }
-        }
-        runner.setProvider(provider)
+//        let provider = GpsProvider(traningType: .gps_Run)
+//        NotificationCenter.default.addObserver(forName: Notification.Name("Step"), object: nil, queue: nil) { notication in
+//            if let step = notication.object as? Int {
+//                provider.stepsHandler?(step)
+//            }
+//        }
+//        runner.setProvider(provider)
         runner.goal = self.goalType
      
         setupMapView()
@@ -69,7 +69,7 @@ class MapViewController: UIViewController {
         self.mapView.setUserTrackingMode(.follow, animated: true)
         //设置地图比例
         let location = self.mapView.userLocation
-        let region = MKCoordinateRegionMakeWithDistance(location.coordinate, CLLocationDistance(exactly: 500)!, CLLocationDistance(exactly: 500)!)
+        let region = MKCoordinateRegion(center: location.coordinate, latitudinalMeters: CLLocationDistance(exactly: 500)!, longitudinalMeters: CLLocationDistance(exactly: 500)!)
         self.mapView.region = region
         self.mapView.setRegion(self.mapView.regionThatFits(region), animated: false)
     }
@@ -153,11 +153,11 @@ class MapViewController: UIViewController {
     }
     
     @IBAction func gpsClick(_ sender: Any) {
-        runner.setProvider(GpsProvider(traningType: .gps_Run))
+        runner.setProvider(WatchProvider(traningType: .gps_Run, stepLength: 80))
     }
     
     @IBAction func jbqClick(_ sender: Any) {
-        runner.setProvider(PedometerProvider(isMapRequird: true))
+        runner.setProvider(PedometerProvider(traningType: .gps_Run, weight: 80))
     }
     
     @IBAction func startClick(_ sender: Any) {
@@ -242,7 +242,7 @@ extension MapViewController: RunnerDelegate {
         self.mapView.removeOverlays(overlays)
         
         let polyline = MKPolyline(coordinates: &self.coordinateArray, count: Int(UInt(self.coordinateArray.count)))
-        self.mapView.add(polyline)
+        self.mapView.addOverlay(polyline)
         
         if let lastCoord = self.coordinateArray.last {
             self.mapView.centerCoordinate = lastCoord

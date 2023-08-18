@@ -9,107 +9,96 @@ import CoreLocation
 import CoreMotion
 import Foundation
 
-open class PedometerProvider: NSObject, RuningDataInterface {
-    public var locationsHander: LocationsHandler?
-    
-    public var headingAngleHandler: DoubleHandler?
-    
-    public var locationSingleHandler: LocationSingleHandler?
-    
-    public var stepsHandler: IntHandler?
-    
-    public var distanceHandler: DoubleHandler?
-    
-    public var calorieHandler: IntHandler?
-    
-    public var speedHandler: DoubleHandler?
-    
-    public var heartHandler: IntHandler?
-    
-    public var altitudeListHandler: DoubleListHandler?
-    
-    public func calculateElevation() -> Double {
-        return 0
+open class PedometerProvider: BaseProvider {
+
+    var pedometerSteps = 0
+    var pedometerDistance = 0.0
+    var pedometerSpeed = 0.0
+    var pedometerCalorie: Int {
+        return self.getCalorie(from: self.pedometerDistance)
     }
-    
-    var totalStpe = 0
-    var totalDistance = 0.0
-    var totalCalorie = 0
     
     var lastPedemeterStep = 0
     var lastPedemeterDistance = 0.0
-    var lastPedemeterCalorie = 0
     
     let pedometer = CMPedometer()
 
-    private var isMapRequird = false
-    private var locationManager: GPSTrainingLocationManager?
-    private var locations: [CLLocation] = []
+    let weight: Double
     
-    public convenience init(isMapRequird: Bool = false) {
-        self.init()
-        self.isMapRequird = isMapRequird
+    /// 初始化方法
+    /// - Parameters:
+    ///   - traningType: 锻炼类型
+    ///   - weight: 体重
+    public init(traningType: TrainingType, weight: Double) {
+        self.weight = weight
+        super.init(traningType: traningType)
     }
     
-    public func start() {
-        if self.isMapRequird {
-            if self.locationManager == nil {
-                self.locationManager = GPSTrainingLocationManager()
-                self.locationManager?.locationsUpdateHandler = { [weak self] location in
-                    guard let `self` = self else { return }
-                    self.locations.append(location)
-                    self.locationsHander?(self.locations)
-                }
-                self.locationManager?.headingAngleUpdateHandler = { [weak self] angle in
-                    guard let `self` = self else { return }
-                    self.headingAngleHandler?(angle)
-                }
-                self.locationManager?.signalAccuracyUpdateHandler = { [weak self] signal in
-                    guard let `self` = self else { return }
-                    self.locationSingleHandler?(signal)
-                }
-                self.locationManager?.startUpdating()
-            }
-        }
+    /// 手动设置心率
+    public func setHeartRate(_ heart: Int) {
+        self.heartHandler?(heart)
+    }
+    
+    public override func start() {
+        super.start()
         self.pedometer.startUpdates(from: Date()) { [weak self] pedometerData, _ in
             guard let `self` = self else { return }
             if let pedometerData = pedometerData {
                 let step = Int(truncating: pedometerData.numberOfSteps)
-                self.totalStpe = self.lastPedemeterStep + step
-                self.totalDistance = self.lastPedemeterDistance + (pedometerData.distance?.doubleValue ?? 0)
-                self.totalCalorie = self.lastPedemeterCalorie + Int((Double(step * 4) / 1000).rounded())
-                self.speedHandler?(pedometerData.currentPace?.doubleValue ?? 0.0)
+                let distance = pedometerData.distance?.doubleValue ?? 0.0
+                self.pedometerSteps = self.lastPedemeterStep + step
+                self.pedometerDistance = self.lastPedemeterDistance + distance
+                self.pedometerSpeed = pedometerData.currentPace?.doubleValue ?? 0.0
             }
-            self.syncData()
+            self.syncPedometerData()
         }
     }
     
-    public func pause() {
-        self.locationManager?.pauseUpdating()
+    public override func pause() {
+        super.pause()
+        
         self.pedometer.stopUpdates()
         
-        self.lastPedemeterStep = self.totalStpe
-        self.lastPedemeterDistance = self.totalDistance
-        self.lastPedemeterCalorie = self.totalCalorie
+        self.lastPedemeterStep = self.pedometerSteps
+        self.lastPedemeterDistance = self.pedometerDistance
         
-        self.syncData()
+        self.syncPedometerData()
     }
     
-    public func stop() {
-        self.locationManager?.stopUpdating()
-        self.locationManager = nil
+    public override func stop() {
+        super.stop()
+        
         self.pedometer.stopUpdates()
         
-        self.lastPedemeterStep = self.totalStpe
-        self.lastPedemeterDistance = self.totalDistance
-        self.lastPedemeterCalorie = self.totalCalorie
+        self.lastPedemeterStep = self.pedometerSteps
+        self.lastPedemeterDistance = self.pedometerDistance
         
-        self.syncData()
+        self.syncPedometerData()
     }
     
-    private func syncData() {
-        self.stepsHandler?(self.totalStpe)
-        self.distanceHandler?(self.totalDistance)
-        self.calorieHandler?(self.totalCalorie)
+    override func syncGPSData() {
+        super.syncGPSData()
+        
+        if isGPSRequird {
+            self.calorieHandler?(self.getCalorie(from: self.gpsDistance))
+        }
+    }
+    
+    private func syncPedometerData() {
+        self.stepsHandler?(self.pedometerSteps)
+        if !isGPSRequird {
+            self.distanceHandler?(self.pedometerDistance)
+            self.calorieHandler?(self.pedometerCalorie)
+            self.speedHandler?(self.pedometerSpeed)
+        }
+    }
+
+    /// 计算卡路里
+    /// - Parameter distance: 运动距离
+    /// - Returns: 千卡
+    ///  体重×运动时间（小时）×指数K
+    ///  指数K＝30÷速度（分钟/400米）
+    private func getCalorie(from distance: Double) -> Int {
+        return lround(self.weight * distance / 800)
     }
 }
