@@ -104,6 +104,7 @@ open class PedometerProvider: BaseProvider {
     override func syncGPSData() {
         super.syncGPSData()
         
+        // 如果是GPS类型运动，使用GPS距离计算卡路里
         if isGPSRequird {
             self.calorieHandler?(self.getCalorie(from: self.gpsDistance))
         }
@@ -111,6 +112,7 @@ open class PedometerProvider: BaseProvider {
     
     private func syncPedometerData() {
         self.stepsHandler?(self.pedometerSteps)
+        // 如果有是GPS类型的运动，距离一律使用Gps的数据
         if !isGPSRequird {
             self.distanceHandler?(self.pedometerDistance)
             self.calorieHandler?(self.pedometerCalorie)

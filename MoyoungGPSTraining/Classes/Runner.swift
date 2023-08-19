@@ -68,7 +68,7 @@ open class Runner: NSObject {
     private let goalProgress = Progress()
     private var altitudeArray: [Double] = []
     private var speedArray: [TimeInterval] = []
-    private var realTimeSpeedArray: [Double] = []
+    private var lastTenSecondDistance = 0.0
     
     private var totalTime: TimeInterval {
         return run.totalValidDuration
@@ -98,10 +98,10 @@ public extension Runner {
         provider.calorieHandler = { [weak self] value in
             self?.run.totalCalorie = value
         }
+        // 这个瞬时速度暂时没用
         provider.speedHandler = { [weak self] value in
             guard value >= 0 else { return }
             self?.run.currentSpeed = value
-            self?.realTimeSpeedArray.append(value)
         }
         provider.heartHandler = { [weak self] value in
             guard let `self` = self else { return }
@@ -164,9 +164,10 @@ public extension Runner {
         timer?.invalidate()
         timer = nil
         
-        dealMinuteData()
+        calculateMinuteData()
         calculateTimePerKilometre()
-        calculateReatTimeElevation()
+        calculateRealTimeElevation()
+        calculateRealTimeSpeed()
         stopedCalculate()
         delegate?.runner(self, didUpdateRun: run)
     }
@@ -178,23 +179,24 @@ extension Runner {
     /// 计时器
     @objc private func timerRun() {
         if Int(Date().timeIntervalSince1970) % 60 == 0 {
-            dealMinuteData()
+            calculateMinuteData()
         }
         
         switch runState {
         case .running:
             run.totalValidDuration += 1
-            dealGoalProgress()
+            calculateGoalProgress()
             calculateTimePerKilometre()
-            calculateReatTimeElevation()
+            calculateRealTimeElevation()
+            calculateRealTimeSpeed()
             delegate?.runner(self, didUpdateRun: run)
         default:
             break
         }
     }
     
-    /// 处理每分钟数据
-    private func dealMinuteData() {
+    /// 计算每分钟数据（每分钟步数、每分钟距离）
+    private func calculateMinuteData() {
         let pastMinSteps = run.totalStep - lastMinSteps
         run.stepsPerMinute.append(Int(pastMinSteps))
         
@@ -211,8 +213,8 @@ extension Runner {
         currentHearts = []
     }
     
-    /// 处理目标进度
-    private func dealGoalProgress() {
+    /// 计算目标进度
+    private func calculateGoalProgress() {
         switch goal {
         case .time:
             goalProgress.completedUnitCount = Int64(run.totalValidDuration)
@@ -265,13 +267,26 @@ extension Runner {
     }
     
     /// 计算实时海拔(每10秒一个数据)
-    private func calculateReatTimeElevation() {
+    private func calculateRealTimeElevation() {
         if Int(run.totalValidDuration) % 10 == 0 || runState == .stop {
             if let last = altitudeArray.last {
                 run.realTimeElevation.append(last)
             }
-            if let last = realTimeSpeedArray.last {
-                run.realTimeSpeed.append(last)
+        }
+    }
+    
+    /// 计算实时配速（前面10秒的距离）
+    private func calculateRealTimeSpeed() {
+        let lastSecond = Int(run.totalValidDuration) % 10
+        if lastSecond == 0 {
+            let distance = run.totalDistance - lastTenSecondDistance
+            run.realTimeSpeed.append(distance / 10.0)
+            lastTenSecondDistance = run.totalDistance
+        } else {
+            if runState == .stop {
+                let distance = run.totalDistance - lastTenSecondDistance
+                run.realTimeSpeed.append(distance / Double(lastSecond))
+                lastTenSecondDistance = 0
             }
         }
     }
@@ -289,6 +304,6 @@ extension Runner {
         self.goalProgress.completedUnitCount = 0
         self.altitudeArray = []
         self.speedArray = []
-        self.realTimeSpeedArray = []
+        self.lastTenSecondDistance = 0
     }
 }
