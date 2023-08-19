@@ -51,6 +51,11 @@ open class Runner: NSObject {
         }
     }
     
+    deinit {
+        self.stop()
+        print("\(Self.self) \(#function)")
+    }
+    
     private var run = Run()
     
     private var provider: BaseProvider?
@@ -94,6 +99,7 @@ public extension Runner {
             self?.run.totalCalorie = value
         }
         provider.speedHandler = { [weak self] value in
+            guard value >= 0 else { return }
             self?.run.currentSpeed = value
             self?.realTimeSpeedArray.append(value)
         }
@@ -238,7 +244,7 @@ extension Runner {
     /// 计算每公里耗时
     private func calculateTimePerKilometre() {
         // 有新的一公里，添加时间
-        if Int(totalDistance) == speedArray.count + 1 {
+        if Int(totalDistance/1000) == speedArray.count + 1 {
             let lastTime = speedArray.reduce(0, +)
             var newTime = totalTime - lastTime
             let lastDistance = Double(speedArray.count)

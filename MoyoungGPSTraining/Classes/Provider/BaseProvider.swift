@@ -46,7 +46,7 @@ open class BaseProvider: NSObject {
     let traningType: TrainingType
     /// 是否需要GPS定位
     var isGPSRequird: Bool {
-        return self.traningType != .indoorRunning && self.traningType != .indoorRunning
+        return self.traningType != .indoorRunning && self.traningType != .indoorWalking
     }
     
     var locationManager: GPSTrainingLocationManager?
@@ -91,8 +91,6 @@ open class BaseProvider: NSObject {
                     guard let `self` = self else { return }
                     self.locations.append(location)
                     self.syncGPSData()
-                    self.locationsHander?(self.locations)
-                    self.altitudeListHandler?(self.locations.map { $0.altitude })
                 }
                 self.locationManager?.headingAngleUpdateHandler = { [weak self] angle in
                     guard let `self` = self else { return }
@@ -180,6 +178,8 @@ open class BaseProvider: NSObject {
         if isGPSRequird {
             self.distanceHandler?(self.gpsDistance)
             self.speedHandler?(self.gpsCurrentSpeed)
+            self.locationsHander?(self.locations)
+            self.altitudeListHandler?(self.locations.map { $0.altitude })
         }
     }
 }

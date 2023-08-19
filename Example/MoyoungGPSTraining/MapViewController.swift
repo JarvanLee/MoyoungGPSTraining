@@ -213,6 +213,9 @@ extension MapViewController: MKMapViewDelegate {
 extension MapViewController: RunnerDelegate {
     
     func runner(_ runner: Runner, didUpdateRun run: Run) {
+    
+        print("代理实时速度 == \(run.currentSpeed)")
+        
         paceLabel?.text = "\(run.getAverageSpeed)"
         
         distanceLabel?.text = "\(run.totalDistance)"

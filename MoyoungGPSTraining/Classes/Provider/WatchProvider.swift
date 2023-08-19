@@ -11,6 +11,10 @@ open class WatchProvider: BaseProvider {
     
     let stepLength: Double
     
+    deinit {
+        print("\(Self.self) \(#function)")
+    }
+    
     public init(traningType: TrainingType, stepLength: Double) {
         self.stepLength = stepLength
         super.init(traningType: traningType)

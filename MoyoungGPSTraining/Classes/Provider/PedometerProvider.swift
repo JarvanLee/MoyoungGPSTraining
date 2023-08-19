@@ -40,6 +40,10 @@ open class PedometerProvider: BaseProvider {
         self.heartHandler?(heart)
     }
     
+    deinit {
+        print("\(Self.self) \(#function)")
+    }
+    
     public override func start() {
         super.start()
         self.pedometer.startUpdates(from: Date()) { [weak self] pedometerData, _ in
@@ -54,7 +58,8 @@ open class PedometerProvider: BaseProvider {
             self.syncPedometerData()
         }
         
-        self.pedometer.startEventUpdates { event, _ in
+        self.pedometer.startEventUpdates { [weak self] event, _ in
+            guard let `self` = self else { return }
             if event?.type == .pause {
                 self.pedometerSpeed = 0.0
                 self.syncPedometerData()
