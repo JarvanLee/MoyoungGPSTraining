@@ -116,12 +116,17 @@ open class BaseProvider: NSObject {
     }
     
     open func pause() {
-        self.locationManager?.pauseUpdating()
+        if self.isGPSRequird {
+            self.locationManager?.pauseUpdating()
+        }
     }
     
     open func stop() {
-        self.locationManager?.stopUpdating()
-        self.locationManager = nil
+        if self.isGPSRequird {
+            self.locationManager?.stopUpdating()
+            self.locationManager = nil
+            self.locations = []
+        }
     }
     
     func calculateElevation() -> Double? {

@@ -53,12 +53,20 @@ open class PedometerProvider: BaseProvider {
             }
             self.syncPedometerData()
         }
+        
+        self.pedometer.startEventUpdates { event, _ in
+            if event?.type == .pause {
+                self.pedometerSpeed = 0.0
+                self.syncPedometerData()
+            }
+        }
     }
     
     public override func pause() {
         super.pause()
         
         self.pedometer.stopUpdates()
+        self.pedometer.stopEventUpdates()
         
         self.lastPedemeterStep = self.pedometerSteps
         self.lastPedemeterDistance = self.pedometerDistance
@@ -70,11 +78,22 @@ open class PedometerProvider: BaseProvider {
         super.stop()
         
         self.pedometer.stopUpdates()
+        self.pedometer.stopEventUpdates()
         
         self.lastPedemeterStep = self.pedometerSteps
         self.lastPedemeterDistance = self.pedometerDistance
         
         self.syncPedometerData()
+        
+        reset()
+    }
+    
+    func reset() {
+        self.pedometerSteps = 0
+        self.pedometerDistance = 0.0
+        self.pedometerSpeed = 0.0
+        self.lastPedemeterStep = 0
+        self.lastPedemeterDistance = 0.0
     }
     
     override func syncGPSData() {

@@ -165,10 +165,20 @@ open class GPSTrainingLocationManager: CLLocationManager {
 }
 
 extension GPSTrainingLocationManager: CLLocationManagerDelegate {
+    
     /// 权限变化
+    ///
     /// - Parameter manager: self
+    public func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        self.authorizationStatusHandler?(status)
+    }
+    
     public func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        self.authorizationStatusHandler?(CLLocationManager.authorizationStatus())
+        if #available(iOS 14.0, *) {
+            self.authorizationStatusHandler?(manager.authorizationStatus)
+        } else {
+            self.authorizationStatusHandler?(CLLocationManager.authorizationStatus())
+        }
     }
     
     /// 当前 大头钉 更新

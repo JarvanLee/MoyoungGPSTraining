@@ -153,11 +153,11 @@ class MapViewController: UIViewController {
     }
     
     @IBAction func gpsClick(_ sender: Any) {
-        runner.setProvider(WatchProvider(traningType: .gps_Run, stepLength: 0.8))
+        runner.setProvider(WatchProvider(traningType: .indoorRunning, stepLength: 0.8))
     }
     
     @IBAction func jbqClick(_ sender: Any) {
-        runner.setProvider(PedometerProvider(traningType: .gps_Run, weight: 80))
+        runner.setProvider(PedometerProvider(traningType: .indoorRunning, weight: 80))
     }
     
     @IBAction func startClick(_ sender: Any) {
