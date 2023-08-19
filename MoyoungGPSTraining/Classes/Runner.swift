@@ -144,6 +144,7 @@ public extension Runner {
         if runState == .stop {
             reset()
         }
+        guard runState != .running else { return }
         runState = .running
         provider?.start()
         
@@ -153,11 +154,13 @@ public extension Runner {
     }
     
     func pause() {
+        guard runState != .pause else { return }
         runState = .pause
         provider?.pause()
     }
     
     func stop() {
+        guard runState != .stop else { return }
         runState = .stop
         provider?.stop()
         
