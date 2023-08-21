@@ -67,7 +67,6 @@ open class Runner: NSObject {
     private var currentHearts: [Int] = []
     private let goalProgress = Progress()
     private var altitudeArray: [Double] = []
-    private var speedArray: [TimeInterval] = []
     private var lastTenSecondDistance = 0.0
     
     private var totalTime: TimeInterval {
@@ -168,7 +167,7 @@ public extension Runner {
         timer = nil
         
         calculateMinuteData()
-        calculateTimePerKilometre()
+        calculateTimePerKilometreAndMile()
         calculateRealTimeElevation()
         calculateRealTimeSpeed()
         stopedCalculate()
@@ -189,7 +188,7 @@ extension Runner {
         case .running:
             run.totalValidDuration += 1
             calculateGoalProgress()
-            calculateTimePerKilometre()
+            calculateTimePerKilometreAndMile()
             calculateRealTimeElevation()
             calculateRealTimeSpeed()
             delegate?.runner(self, didUpdateRun: run)
@@ -246,25 +245,52 @@ extension Runner {
         delegate?.runner(self, didUpdateGoalProgress: goalProgress)
     }
     
-    /// 计算每公里耗时
-    private func calculateTimePerKilometre() {
-        // 有新的一公里，添加时间
-        if Int(totalDistance/1000) == speedArray.count + 1 {
-            let lastTime = speedArray.reduce(0, +)
-            var newTime = totalTime - lastTime
-            let lastDistance = Double(speedArray.count)
-            let newDistance = totalDistance - lastDistance
-            if newDistance > 1 {
-                let delta = Double(newTime) / (totalDistance - lastDistance) * (totalDistance - lastDistance - 1)
-                newTime -= delta
-            }
-            speedArray.append(newTime)
-            run.timeForKilometer = speedArray
-        } else {
-            if runState == .stop {
-                let lastTime = totalTime - speedArray.reduce(0, +)
-                speedArray.append(lastTime)
+    /// 计算每公里和每英里耗时
+    private func calculateTimePerKilometreAndMile() {
+        /// 有新的一公里，添加时间
+        // 计算公里
+        do {
+            var speedArray = run.timeForKilometer
+            if Int(totalDistance/1000) == speedArray.count + 1 {
+                let lastTime = speedArray.reduce(0, +)
+                var newTime = totalTime - lastTime
+                let lastDistance = Double(speedArray.count)*1000
+                let newDistance = totalDistance - lastDistance
+                if newDistance > 1000 {
+                    let delta = Double(newTime) / newDistance * (newDistance - 1000)
+                    newTime -= delta
+                }
+                speedArray.append(newTime)
                 run.timeForKilometer = speedArray
+            } else {
+                if runState == .stop {
+                    let lastTime = totalTime - speedArray.reduce(0, +)
+                    speedArray.append(lastTime)
+                    run.timeForKilometer = speedArray
+                }
+            }
+        }
+        
+        // 计算英里
+        do {
+            var speedArray = run.timeForMile
+            if Int(totalDistance/1609.3) == speedArray.count + 1 {
+                let lastTime = speedArray.reduce(0, +)
+                var newTime = totalTime - lastTime
+                let lastDistance = Double(speedArray.count)*1609.3
+                let newDistance = totalDistance - lastDistance
+                if newDistance > 1609.3 {
+                    let delta = Double(newTime) / newDistance * (newDistance - 1609.3)
+                    newTime -= delta
+                }
+                speedArray.append(newTime)
+                run.timeForMile = speedArray
+            } else {
+                if runState == .stop {
+                    let lastTime = totalTime - speedArray.reduce(0, +)
+                    speedArray.append(lastTime)
+                    run.timeForMile = speedArray
+                }
             }
         }
     }
@@ -283,12 +309,12 @@ extension Runner {
         let lastSecond = Int(run.totalValidDuration) % 10
         if lastSecond == 0 {
             let distance = run.totalDistance - lastTenSecondDistance
-            run.realTimeSpeed.append(distance / 10.0)
+            run.realTimeSpeed.append(10.0 / distance)
             lastTenSecondDistance = run.totalDistance
         } else {
             if runState == .stop {
                 let distance = run.totalDistance - lastTenSecondDistance
-                run.realTimeSpeed.append(distance / Double(lastSecond))
+                run.realTimeSpeed.append(Double(lastSecond) / distance)
                 lastTenSecondDistance = 0
             }
         }
@@ -306,7 +332,6 @@ extension Runner {
         self.currentHearts = []
         self.goalProgress.completedUnitCount = 0
         self.altitudeArray = []
-        self.speedArray = []
         self.lastTenSecondDistance = 0
     }
 }

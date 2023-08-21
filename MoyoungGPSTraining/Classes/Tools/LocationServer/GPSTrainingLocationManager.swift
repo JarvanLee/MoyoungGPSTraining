@@ -251,9 +251,10 @@ extension GPSTrainingLocationManager: CLLocationManagerDelegate {
     }
     
     fileprivate func filterLocation(_ location: CLLocation) -> CLLocation {
+        /*
         if self.coordinateTrustor == nil {
             self.coordinateTrustor = CoordinateTrust(coordinate: location.coordinate)
-        }
+        }*/
         
         if let coordinateTrustor = self.coordinateTrustor,
            let trainingType = self.trainingType,
