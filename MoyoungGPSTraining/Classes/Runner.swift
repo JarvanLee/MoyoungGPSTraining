@@ -51,6 +51,9 @@ open class Runner: NSObject {
         }
     }
     
+    /// 计算实时数据时，秒数间隔，默认是10
+    public var realTimeInterval: TimeInterval = 10
+    
     deinit {
         self.stop()
         print("\(Self.self) \(#function)")
@@ -67,14 +70,14 @@ open class Runner: NSObject {
     private var currentHearts: [Int] = []
     private let goalProgress = Progress()
     private var altitudeArray: [Double] = []
-    private var lastTenSecondDistance = 0.0
+    private var lastSecondDistance = 0.0
     
     private var totalTime: TimeInterval {
         return run.totalValidDuration
     }
 
-    private var totalDistance: Double {
-        return run.totalDistance
+    private var totalMeters: Measurement<UnitLength> {
+        return Measurement(value: run.totalDistance, unit: UnitLength.meters)
     }
     
     override public init() {
@@ -168,8 +171,7 @@ public extension Runner {
         
         calculateMinuteData()
         calculateTimePerKilometreAndMile()
-        calculateRealTimeElevation()
-        calculateRealTimeSpeed()
+        calculateRealTimeData()
         stopedCalculate()
         delegate?.runner(self, didUpdateRun: run)
     }
@@ -189,8 +191,7 @@ extension Runner {
             run.totalValidDuration += 1
             calculateGoalProgress()
             calculateTimePerKilometreAndMile()
-            calculateRealTimeElevation()
-            calculateRealTimeSpeed()
+            calculateRealTimeData()
             delegate?.runner(self, didUpdateRun: run)
         default:
             break
@@ -250,72 +251,67 @@ extension Runner {
         /// 有新的一公里，添加时间
         // 计算公里
         do {
-            var speedArray = run.timeForKilometer
-            if Int(totalDistance/1000) == speedArray.count + 1 {
-                let lastTime = speedArray.reduce(0, +)
-                var newTime = totalTime - lastTime
-                let lastDistance = Double(speedArray.count)*1000
-                let newDistance = totalDistance - lastDistance
-                if newDistance > 1000 {
-                    let delta = Double(newTime) / newDistance * (newDistance - 1000)
+            var timeArray = run.timeForKilometer
+            let totalKm = totalMeters.converted(to: UnitLength.kilometers)
+            if Int(totalKm.value) == timeArray.count + 1 {
+                var newTime = totalTime - timeArray.reduce(0, +)
+                let newDistance = totalKm - Measurement(value: Double(timeArray.count), unit: UnitLength.kilometers)
+                if newDistance.value > 1 {
+                    let delta = Double(newTime) / newDistance.value * (newDistance.value - 1)
                     newTime -= delta
                 }
-                speedArray.append(newTime)
-                run.timeForKilometer = speedArray
+                timeArray.append(newTime)
+                run.timeForKilometer = timeArray
             } else {
                 if runState == .stop {
-                    let lastTime = totalTime - speedArray.reduce(0, +)
-                    speedArray.append(lastTime)
-                    run.timeForKilometer = speedArray
+                    let newTime = totalTime - timeArray.reduce(0, +)
+                    timeArray.append(newTime)
+                    run.timeForKilometer = timeArray
                 }
             }
         }
         
         // 计算英里
         do {
-            var speedArray = run.timeForMile
-            if Int(totalDistance/1609.3) == speedArray.count + 1 {
-                let lastTime = speedArray.reduce(0, +)
-                var newTime = totalTime - lastTime
-                let lastDistance = Double(speedArray.count)*1609.3
-                let newDistance = totalDistance - lastDistance
-                if newDistance > 1609.3 {
-                    let delta = Double(newTime) / newDistance * (newDistance - 1609.3)
+            var timeArray = run.timeForMile
+            let totalMile = totalMeters.converted(to: UnitLength.miles)
+            if Int(totalMile.value) == timeArray.count + 1 {
+                var newTime = totalTime - timeArray.reduce(0, +)
+                let newDistance = totalMile - Measurement(value: Double(timeArray.count), unit: UnitLength.miles)
+                if newDistance.value > 1 {
+                    let delta = Double(newTime) / newDistance.value * (newDistance.value - 1)
                     newTime -= delta
                 }
-                speedArray.append(newTime)
-                run.timeForMile = speedArray
+                timeArray.append(newTime)
+                run.timeForMile = timeArray
             } else {
                 if runState == .stop {
-                    let lastTime = totalTime - speedArray.reduce(0, +)
-                    speedArray.append(lastTime)
-                    run.timeForMile = speedArray
+                    let newTime = totalTime - timeArray.reduce(0, +)
+                    timeArray.append(newTime)
+                    run.timeForMile = timeArray
                 }
             }
         }
     }
     
-    /// 计算实时海拔(每10秒一个数据)
-    private func calculateRealTimeElevation() {
-        if Int(run.totalValidDuration) % 10 == 0 || runState == .stop {
+    /// 计算实时数据（每10秒一个数据）
+    /// 目前有实时配速、实时海拔
+    private func calculateRealTimeData() {
+        let lastSecond = Int(run.totalValidDuration) % Int(self.realTimeInterval)
+        if lastSecond == 0 || (lastSecond != 0 && runState == .stop) {
+            // 计算实时配速
+            let distance = run.totalDistance - lastSecondDistance
+            if distance <= 0 {
+                run.realTimeSpeed.append(-1.0)
+            } else {
+                let pace = (lastSecond == 0 ? self.realTimeInterval : Double(lastSecond)) / distance
+                run.realTimeSpeed.append(pace)
+            }
+            lastSecondDistance = run.totalDistance
+            
+            // 计算实时海拔
             if let last = altitudeArray.last {
                 run.realTimeElevation.append(last)
-            }
-        }
-    }
-    
-    /// 计算实时配速（前面10秒的距离）
-    private func calculateRealTimeSpeed() {
-        let lastSecond = Int(run.totalValidDuration) % 10
-        if lastSecond == 0 {
-            let distance = run.totalDistance - lastTenSecondDistance
-            run.realTimeSpeed.append(10.0 / distance)
-            lastTenSecondDistance = run.totalDistance
-        } else {
-            if runState == .stop {
-                let distance = run.totalDistance - lastTenSecondDistance
-                run.realTimeSpeed.append(Double(lastSecond) / distance)
-                lastTenSecondDistance = 0
             }
         }
     }
@@ -332,6 +328,6 @@ extension Runner {
         self.currentHearts = []
         self.goalProgress.completedUnitCount = 0
         self.altitudeArray = []
-        self.lastTenSecondDistance = 0
+        self.lastSecondDistance = 0
     }
 }
