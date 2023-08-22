@@ -18,39 +18,37 @@ public typealias LocationSingleHandler = (_ value: GPSTrainingLocationSignalRang
 open class BaseProvider: NSObject {
     
     // 步数回调
-    var stepsHandler: IntHandler?
+    public var stepsHandler: IntHandler?
     // 卡路里回调
-    var calorieHandler: IntHandler?
+    public var calorieHandler: IntHandler?
     // 心率回调
-    var heartHandler: IntHandler?
+    public var heartHandler: IntHandler?
     
     //MARK: - GPS相关
     // 定位权限回调
-    var authorizationStatusHandler: LocationsAuthStatusHandler?
+    public var authorizationStatusHandler: LocationsAuthStatusHandler?
     // 定位失败回调
-    var locationFailHandler: ((_ error: Error) -> Void)?
+    public var locationFailHandler: ((_ error: Error) -> Void)?
     // 定位点
-    var locationsHander: LocationsHandler?
+    public var locationsHander: LocationsHandler?
     // 定位头角度
-    var headingAngleHandler: DoubleHandler?
+    public var headingAngleHandler: DoubleHandler?
     // 信号强度
-    var locationSingleHandler: LocationSingleHandler?
+    public var locationSingleHandler: LocationSingleHandler?
     // 爬升高度数组
-    var altitudeListHandler: DoubleListHandler?
+    public var altitudeListHandler: DoubleListHandler?
     // 距离（可能是GPS，可能是手机计步器）
-    var distanceHandler: DoubleHandler?
+    public var distanceHandler: DoubleHandler?
     // 瞬时速度（可能是GPS，可能是手机计步器）
-    var speedHandler: DoubleHandler?
+    public var speedHandler: DoubleHandler?
     
-    /// 锻炼类型
-    let traningType: TrainingType
     /// 是否需要GPS定位
-    var isGPSRequird: Bool {
-        return self.traningType != .indoorRunning && self.traningType != .indoorWalking
+    public var isGPSRequird: Bool {
+        return self.locationManager != nil
     }
     
-    var locationManager: GPSTrainingLocationManager?
-    var locations: [CLLocation] = []
+    public private(set) var locationManager: GPSTrainingLocationManager?
+    public private(set) var locations: [CLLocation] = []
     var gpsDistance: Double {
         var distance: CLLocationDistance = 0
         if locations.count > 1 {
@@ -68,46 +66,42 @@ open class BaseProvider: NSObject {
         return locations.last?.speed ?? 0.0
     }
     
-    public init(traningType: TrainingType) {
-        self.traningType = traningType
+    public init(locationManager: GPSTrainingLocationManager? = nil) {
+        self.locationManager = locationManager
         super.init()
     }
     
     /// 手动设置心率
-    public func setHeartRate(_ heart: Int) {}
+    open func setHeartRate(_ heart: Int) {}
     
     /// 手动设置步数
-    public func setSteps(_ steps: Int) {}
+    open func setSteps(_ steps: Int) {}
     
     /// 手动设置卡路里
-    public func setCalorie(_ calorie: Int) {}
+    open func setCalorie(_ calorie: Int) {}
     
     open func start() {
         if self.isGPSRequird {
-            if self.locationManager == nil {
-                self.locationManager = GPSTrainingLocationManager()
-                self.locationManager?.trainingType = traningType
-                self.locationManager?.locationsUpdateHandler = { [weak self] location in
-                    guard let `self` = self else { return }
-                    self.locations.append(location)
-                    self.syncGPSData()
-                }
-                self.locationManager?.headingAngleUpdateHandler = { [weak self] angle in
-                    guard let `self` = self else { return }
-                    self.headingAngleHandler?(angle)
-                }
-                self.locationManager?.signalAccuracyUpdateHandler = { [weak self] signal in
-                    guard let `self` = self else { return }
-                    self.locationSingleHandler?(signal)
-                }
-                self.locationManager?.authorizationStatusHandler = { [weak self] state in
-                    guard let `self` = self else { return }
-                    self.authorizationStatusHandler?(state)
-                }
-                self.locationManager?.locationFailHandler = { [weak self] error in
-                    guard let `self` = self else { return }
-                    self.locationFailHandler?(error)
-                }
+            self.locationManager?.locationsUpdateHandler = { [weak self] location in
+                guard let `self` = self else { return }
+                self.locations.append(location)
+                self.syncGPSData()
+            }
+            self.locationManager?.headingAngleUpdateHandler = { [weak self] angle in
+                guard let `self` = self else { return }
+                self.headingAngleHandler?(angle)
+            }
+            self.locationManager?.signalAccuracyUpdateHandler = { [weak self] signal in
+                guard let `self` = self else { return }
+                self.locationSingleHandler?(signal)
+            }
+            self.locationManager?.authorizationStatusHandler = { [weak self] state in
+                guard let `self` = self else { return }
+                self.authorizationStatusHandler?(state)
+            }
+            self.locationManager?.locationFailHandler = { [weak self] error in
+                guard let `self` = self else { return }
+                self.locationFailHandler?(error)
             }
             self.locationManager?.startUpdating()
         }
@@ -127,13 +121,13 @@ open class BaseProvider: NSObject {
         }
     }
     
-    func calculateElevation() -> Double? {
+    open func calculateElevation() -> Double? {
         guard isGPSRequird else {
             return nil
         }
         var elevation: Double = 0
-
-        if locations.count < 2 {
+        
+        guard locations.count >= 2 else {
             return elevation
         }
 

@@ -15,9 +15,9 @@ open class WatchProvider: BaseProvider {
         print("\(Self.self) \(#function)")
     }
     
-    public init(traningType: TrainingType, stepLength: Double) {
+    public required init(stepLength: Double, locationManager: GPSTrainingLocationManager? = nil) {
         self.stepLength = stepLength
-        super.init(traningType: traningType)
+        super.init(locationManager: locationManager)
     }
     
     /// 手动设置心率

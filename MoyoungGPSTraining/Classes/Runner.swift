@@ -14,14 +14,16 @@ public enum RunState {
     case stop
 }
 
+/// 目标类型
 public enum RunGoalType {
     case none
     // 单位米
     case distance(goal: Double)
     // 单位秒
     case time(goal: TimeInterval)
-    
+    // 配速
     case pace(goal: Double)
+    // 卡路里
     case calorise(goal: Int)
 }
 

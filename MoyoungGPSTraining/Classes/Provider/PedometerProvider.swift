@@ -29,9 +29,9 @@ open class PedometerProvider: BaseProvider {
     /// - Parameters:
     ///   - traningType: 锻炼类型
     ///   - weight: 体重
-    public init(traningType: TrainingType, weight: Double) {
+    public required init(weight: Double, locationManager: GPSTrainingLocationManager? = nil) {
         self.weight = weight
-        super.init(traningType: traningType)
+        super.init(locationManager: locationManager)
     }
     
     /// 手动设置心率

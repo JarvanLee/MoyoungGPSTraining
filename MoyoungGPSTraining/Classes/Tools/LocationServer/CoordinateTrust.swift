@@ -8,8 +8,15 @@
 import UIKit
 import MapKit
 
+public protocol CoordinateTrustProtocol {
+    
+    func fudgedLocation(_ location: CLLocation) ->CLLocation?
+    
+}
+
 /// 用于评估当前坐标是否值得信任， < 1 时，将变更坐标点燥值
-open class CoordinateTrust: NSObject {
+open class CoordinateTrust: NSObject, CoordinateTrustProtocol {
+   
     
     /// 被评估的坐标
     public var coordinate: CLLocationCoordinate2D
@@ -20,6 +27,10 @@ open class CoordinateTrust: NSObject {
     /// 信任值
     public var trustFactor: Double = 1
     
+    /// 最大速度限定值 -1 为无效值
+    public var maximumSpeed: CLLocationSpeed = -1
+    
+    /// 评估个数
     public var trastLcationsCount: Int = 0
     
     public init(coordinate: CLLocationCoordinate2D) {
@@ -49,11 +60,30 @@ open class CoordinateTrust: NSObject {
     /// - Returns: 为 nil 表示 测量坐标点值得信任
     public func fudgedLocation(_ location: CLLocation) ->CLLocation? {
         
+        if self.maximumSpeed < 0 {
+            return nil
+        }
+        
+        self.locations.append(location)
+        self.trastLcationsCount += 1
+        
+        /// 每1000m 评估一次,  < 1000 个点，每次都评估
+        if self.trastLcationsCount < 1000 {
+            self.updateTrustFactor(with: self.maximumSpeed)
+        } else {
+            
+            if self.trastLcationsCount % 1000 == 0 {
+                self.updateTrustFactor(with: self.maximumSpeed)
+                self.locations.removeAll()
+            }
+        }
+        
+        
         if self.trustFactor >= 1 {
             
             return nil
         }
-        
+  
         let accuracyFudge = kCLLocationAccuracyHundredMeters * (1.0 - self.trustFactor)
         let fudgedLocation = CLLocation(
             coordinate: location.coordinate, altitude: location.altitude,
