@@ -231,7 +231,7 @@ extension GPSTrainingLocationManager: CLLocationManagerDelegate {
         
         for location in locations {
             
-            guard location.horizontalAccuracy > self.horizontalAccuracy,
+            guard location.horizontalAccuracy < self.horizontalAccuracy,
                   abs(location.timestamp.timeIntervalSinceNow) < self.locationUpdateTimeInterval else {
                 continue
             }

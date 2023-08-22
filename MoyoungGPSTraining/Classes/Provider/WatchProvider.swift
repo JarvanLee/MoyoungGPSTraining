@@ -14,7 +14,10 @@ open class WatchProvider: BaseProvider {
     deinit {
         print("\(Self.self) \(#function)")
     }
-    
+    /// 初始化方法
+    /// - Parameters:
+    ///   - stepLength: 步长
+    ///   - locationManager: 定位管理器，如果是室内运动如室内跑步、室内散步等不需要GPS功能的则不传
     public required init(stepLength: Double, locationManager: GPSTrainingLocationManager? = nil) {
         self.stepLength = stepLength
         super.init(locationManager: locationManager)

@@ -27,8 +27,8 @@ open class PedometerProvider: BaseProvider {
     
     /// 初始化方法
     /// - Parameters:
-    ///   - traningType: 锻炼类型
     ///   - weight: 体重
+    ///   - locationManager: 定位管理器，如果是室内运动如室内跑步、室内散步等不需要GPS功能的则不传
     public required init(weight: Double, locationManager: GPSTrainingLocationManager? = nil) {
         self.weight = weight
         super.init(locationManager: locationManager)
