@@ -33,7 +33,7 @@ public extension CLLocation {
     func countryCode(handler: ((_ countryCode: String?) -> Void)?) {
         CLGeocoder().reverseGeocodeLocation(self) { (placemarks: [CLPlacemark]?, error: Error?) in
             // 有可能为空或失败
-            guard let placemark = placemarks?.first, error != nil else {
+            guard let placemark = placemarks?.first, error == nil else {
                 return
             }
             handler?(placemark.isoCountryCode)

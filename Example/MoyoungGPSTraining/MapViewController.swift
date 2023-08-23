@@ -157,7 +157,9 @@ class MapViewController: UIViewController {
     }
     
     @IBAction func jbqClick(_ sender: Any) {
-        runner.setProvider(PedometerProvider(weight: 80, locationManager: GPSTrainingLocationManager()))
+        let m = GPSTrainingLocationManager()
+        m.horizontalAccuracy = 50
+        runner.setProvider(PedometerProvider(weight: 80, locationManager: m))
     }
     
     @IBAction func startClick(_ sender: Any) {
