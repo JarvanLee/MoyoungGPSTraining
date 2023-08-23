@@ -41,6 +41,7 @@ open class Run: NSObject {
     public var currentSpeed: Double = 0.0
 
     /// 平均配速
+    ///  - 单位：秒/米
     public var getAverageSpeed: Double {
         guard totalDistance > 0 else {
             return 0

@@ -18,6 +18,8 @@ public protocol RunnerDelegate: NSObjectProtocol {
     func runner(_ runner: Runner, didUpdateGoalProgress progress: Progress)
     /// 更新GPS坐标，有可能没有数据
     func runner(_ runner: Runner, didUpdateLocations locations: [CLLocation])
+    /// 更新GPS坐标段，runner暂停再开始会产生新的 line
+    func runner(_ runner: Runner, didUpdateTimeLine line: GPSTrainingLine)
     /// 更新GPS位置指针角度
     func runner(_ runner: Runner, didUpdateHeadingAngle angle: Double)
     /// 更新GPS信号等级
@@ -32,6 +34,7 @@ public extension RunnerDelegate {
     func runner(_ runner: Runner, didUpdateGoalProgress progress: Progress) {}
     func runner(_ runner: Runner, didUpdateState runState: RunState) {}
     func runner(_ runner: Runner, didUpdateLocations locations: [CLLocation]) {}
+    func runner(_ runner: Runner, didUpdateTimeLine line: GPSTrainingLine) {}
     func runner(_ runner: Runner, didUpdateHeadingAngle angle: Double) {}
     func runner(_ runner: Runner, didUpdateSignalLevel level: GPSTrainingLocationSignalRange) {}
     func runner(_ runner: Runner, didChangeAuthorization state: CLAuthorizationStatus) {}

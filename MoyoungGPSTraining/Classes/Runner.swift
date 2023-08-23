@@ -125,6 +125,10 @@ public extension Runner {
             guard let `self` = self else { return }
             self.delegate?.runner(self, didUpdateLocations: value)
         }
+        provider.trainingLineHandler = { [weak self] value in
+            guard let `self` = self else { return }
+            self.delegate?.runner(self, didUpdateTimeLine: value)
+        }
         provider.locationSingleHandler = { [weak self] value in
             guard let `self` = self else { return }
             self.delegate?.runner(self, didUpdateSignalLevel: value)

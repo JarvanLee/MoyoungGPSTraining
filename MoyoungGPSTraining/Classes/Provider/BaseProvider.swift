@@ -14,6 +14,7 @@ public typealias DoubleListHandler = (_ value: [Double]) -> Void
 public typealias LocationsHandler = (_ value: [CLLocation]) -> Void
 public typealias LocationsAuthStatusHandler = (_ value: CLAuthorizationStatus) -> Void
 public typealias LocationSingleHandler = (_ value: GPSTrainingLocationSignalRange) -> Void
+public typealias TrainingLineHandler = (_ value: GPSTrainingLine) -> Void
 
 open class BaseProvider: NSObject {
     
@@ -41,6 +42,8 @@ open class BaseProvider: NSObject {
     public var distanceHandler: DoubleHandler?
     // 瞬时速度（可能是GPS，可能是手机计步器）
     public var speedHandler: DoubleHandler?
+    // 锻炼段
+    public var trainingLineHandler: TrainingLineHandler?
     
     /// 是否需要GPS定位
     public var isGPSRequird: Bool {
@@ -49,18 +52,11 @@ open class BaseProvider: NSObject {
     
     public private(set) var locationManager: GPSTrainingLocationManager?
     public private(set) var locations: [CLLocation] = []
+    public private(set) var trainingLines: [GPSTrainingLine] = []
+    private var currentLine: GPSTrainingLine?
+    
     var gpsDistance: Double {
-        var distance: CLLocationDistance = 0
-        if locations.count > 1 {
-            var currentLocation: CLLocation? = nil
-            for location in locations {
-                if currentLocation != nil {
-                    distance += location.distance(from: currentLocation!)
-                }
-                currentLocation = location
-            }
-        }
-        return distance
+        return trainingLines.reduce(0, { $0 + $1.locations.distance })
     }
     var gpsCurrentSpeed: Double {
         return locations.last?.speed ?? 0.0
@@ -85,6 +81,7 @@ open class BaseProvider: NSObject {
             self.locationManager?.locationsUpdateHandler = { [weak self] location in
                 guard let `self` = self else { return }
                 self.locations.append(location)
+                self.currentLine?.add(location: location)
                 self.syncGPSData()
             }
             self.locationManager?.headingAngleUpdateHandler = { [weak self] angle in
@@ -104,12 +101,20 @@ open class BaseProvider: NSObject {
                 self.locationFailHandler?(error)
             }
             self.locationManager?.startUpdating()
+            
+            if self.currentLine == nil {
+                self.currentLine = GPSTrainingLine()
+            }
         }
     }
     
     open func pause() {
         if self.isGPSRequird {
             self.locationManager?.pauseUpdating()
+            if let line = self.currentLine {
+                self.trainingLines.append(line)
+                self.currentLine = nil
+            }
         }
     }
     
@@ -118,6 +123,8 @@ open class BaseProvider: NSObject {
             self.locationManager?.stopUpdating()
             self.locationManager = nil
             self.locations = []
+            self.trainingLines = []
+            self.currentLine = nil
         }
     }
     
@@ -174,6 +181,9 @@ open class BaseProvider: NSObject {
             self.speedHandler?(self.gpsCurrentSpeed)
             self.locationsHander?(self.locations)
             self.altitudeListHandler?(self.locations.map { $0.altitude })
+            if let line = self.currentLine {
+                self.trainingLineHandler?(line)
+            }
         }
     }
 }
