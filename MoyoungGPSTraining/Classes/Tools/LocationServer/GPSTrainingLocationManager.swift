@@ -439,8 +439,13 @@ extension CLLocation {
         CLGeocoder().reverseGeocodeLocation(self) { (placemarks: [CLPlacemark]?, error: Error?) in
             
             var countryCode: String?
-            guard let placemark = placemarks?.first else {
-                handler?(countryCode)
+            
+//            guard let placemark = placemarks?.first else {
+//                handler?(countryCode)
+//                return
+//            }
+            // 有可能为空或失败
+            guard let placemark = placemarks?.first, error == nil else {
                 return
             }
             
