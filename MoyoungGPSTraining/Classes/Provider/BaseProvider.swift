@@ -53,7 +53,6 @@ open class BaseProvider: NSObject {
     public private(set) var locationManager: GPSTrainingLocationManager?
     public private(set) var locations: [CLLocation] = []
     public private(set) var trainingLines: [GPSTrainingLine] = []
-    private var currentLine: GPSTrainingLine?
     
     var gpsDistance: Double {
         return trainingLines.reduce(0, { $0 + $1.locations.distance })
@@ -81,7 +80,7 @@ open class BaseProvider: NSObject {
             self.locationManager?.locationsUpdateHandler = { [weak self] location in
                 guard let `self` = self else { return }
                 self.locations.append(location)
-                self.currentLine?.add(location: location)
+                self.trainingLines.last?.add(location: location)
                 self.syncGPSData()
             }
             self.locationManager?.headingAngleUpdateHandler = { [weak self] angle in
@@ -102,19 +101,13 @@ open class BaseProvider: NSObject {
             }
             self.locationManager?.startUpdating()
             
-            if self.currentLine == nil {
-                self.currentLine = GPSTrainingLine()
-            }
+            self.trainingLines.append(GPSTrainingLine())
         }
     }
     
     open func pause() {
         if self.isGPSRequird {
             self.locationManager?.pauseUpdating()
-            if let line = self.currentLine {
-                self.trainingLines.append(line)
-                self.currentLine = nil
-            }
         }
     }
     
@@ -124,7 +117,6 @@ open class BaseProvider: NSObject {
             self.locationManager = nil
             self.locations = []
             self.trainingLines = []
-            self.currentLine = nil
         }
     }
     
@@ -181,7 +173,7 @@ open class BaseProvider: NSObject {
             self.speedHandler?(self.gpsCurrentSpeed)
             self.locationsHander?(self.locations)
             self.altitudeListHandler?(self.locations.map { $0.altitude })
-            if let line = self.currentLine {
+            if let line = self.trainingLines.last {
                 self.trainingLineHandler?(line)
             }
         }
