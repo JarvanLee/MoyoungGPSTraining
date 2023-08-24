@@ -25,7 +25,7 @@ open class BaseProvider: NSObject {
     // 心率回调
     public var heartHandler: IntHandler?
     
-    //MARK: - GPS相关
+    // MARK: - GPS相关
     // 定位权限回调
     public var authorizationStatusHandler: LocationsAuthStatusHandler?
     // 定位失败回调
@@ -45,12 +45,7 @@ open class BaseProvider: NSObject {
     // 锻炼段
     public var trainingLineHandler: TrainingLineHandler?
     
-    /// 是否需要GPS定位
-    public var isGPSRequird: Bool {
-        return self.locationManager != nil
-    }
-    
-    public let locationManager: GPSTrainingLocationManager?
+    public let isLocationRequird: Bool
     public private(set) var locations: [CLLocation] = []
     public private(set) var trainingLines: [GPSTrainingLine] = []
     
@@ -61,9 +56,13 @@ open class BaseProvider: NSObject {
         return locations.last?.speed ?? 0.0
     }
     
-    public init(locationManager: GPSTrainingLocationManager? = nil) {
-        self.locationManager = locationManager
+    public init(isLocationRequird: Bool = false) {
+        self.isLocationRequird = isLocationRequird
         super.init()
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     
     /// 手动设置心率
@@ -76,50 +75,62 @@ open class BaseProvider: NSObject {
     open func setCalorie(_ calorie: Int) {}
     
     open func start() {
-        if self.isGPSRequird {
-            self.locationManager?.locationsUpdateHandler = { [weak self] location in
+        if self.isLocationRequird {
+            let loco = LocationManager.shared
+            loco.startUpdating()
+            
+            when(loco, does: .locationDidUpdateLocation) { [weak self] _ in
                 guard let `self` = self else { return }
-                self.locations.append(location)
-                self.trainingLines.last?.add(location: location)
-                self.syncGPSData()
+                if let location = loco.locomotionSample().location {
+                    self.locations.append(location)
+                    self.trainingLines.last?.add(location: location)
+                    self.syncGPSData()
+                }
             }
-            self.locationManager?.headingAngleUpdateHandler = { [weak self] angle in
+            when(loco, does: .locationDidUpdateHeadingAngle) { [weak self] note in
                 guard let `self` = self else { return }
-                self.headingAngleHandler?(angle)
+                if let angle = note.userInfo?["headingAngle"] as? CGFloat {
+                    self.headingAngleHandler?(angle)
+                }
             }
-            self.locationManager?.signalAccuracyUpdateHandler = { [weak self] signal in
+            when(loco, does: .locationDidUptateSignalAccuracy) { [weak self] note in
                 guard let `self` = self else { return }
-                self.locationSingleHandler?(signal)
+                if let signal = note.userInfo?["signal"] as? GPSTrainingLocationSignalRange {
+                    self.locationSingleHandler?(signal)
+                }
             }
-            self.locationManager?.authorizationStatusHandler = { [weak self] state in
+            when(loco, does: .locationDidChangeAuthorizationStatus) { [weak self] note in
                 guard let `self` = self else { return }
-                self.authorizationStatusHandler?(state)
+                if let status = note.userInfo?["status"] as? CLAuthorizationStatus {
+                    self.authorizationStatusHandler?(status)
+                }
             }
-            self.locationManager?.locationFailHandler = { [weak self] error in
+            when(loco, does: .locationDidFailWithError) { [weak self] note in
                 guard let `self` = self else { return }
-                self.locationFailHandler?(error)
+                if let error = note.userInfo?["error"] as? Error {
+                    self.locationFailHandler?(error)
+                }
             }
-            self.locationManager?.startUpdating()
             
             self.trainingLines.append(GPSTrainingLine())
         }
     }
     
     open func pause() {
-        if self.isGPSRequird {
-            self.locationManager?.pauseUpdating()
+        if self.isLocationRequird {
+            LocationManager.shared.pauseUpdating()
         }
     }
     
     open func stop() {
-        if self.isGPSRequird {
-            self.locationManager?.stopUpdating()
+        if self.isLocationRequird {
+            LocationManager.shared.stopUpdating()
             self.locations = []
         }
     }
     
     open func calculateElevation() -> Double? {
-        guard isGPSRequird else {
+        guard isLocationRequird else {
             return nil
         }
         var elevation: Double = 0
@@ -166,7 +177,7 @@ open class BaseProvider: NSObject {
     }
     
     func syncGPSData() {
-        if isGPSRequird {
+        if isLocationRequird {
             self.distanceHandler?(self.gpsDistance)
             self.speedHandler?(self.gpsCurrentSpeed)
             self.locationsHander?(self.locations)

@@ -47,13 +47,6 @@ class MapViewController: UIViewController {
         super.viewDidLoad()
         
         runner.delegate = self
-//        let provider = GpsProvider(traningType: .gps_Run)
-//        NotificationCenter.default.addObserver(forName: Notification.Name("Step"), object: nil, queue: nil) { notication in
-//            if let step = notication.object as? Int {
-//                provider.stepsHandler?(step)
-//            }
-//        }
-//        runner.setProvider(provider)
         runner.goal = self.goalType
      
         setupMapView()
@@ -153,13 +146,11 @@ class MapViewController: UIViewController {
     }
     
     @IBAction func gpsClick(_ sender: Any) {
-        runner.setProvider(WatchProvider(stepLength: 0.8))
+        runner.setProvider(WatchProvider(stepLength: 0.8, isLocationRequird: true))
     }
     
     @IBAction func jbqClick(_ sender: Any) {
-        let m = GPSTrainingLocationManager()
-        m.horizontalAccuracy = 50
-        runner.setProvider(PedometerProvider(weight: 80, locationManager: m))
+        runner.setProvider(PedometerProvider(weight: 80, isLocationRequird: true))
     }
     
     @IBAction func startClick(_ sender: Any) {

@@ -18,9 +18,9 @@ open class WatchProvider: BaseProvider {
     /// - Parameters:
     ///   - stepLength: 步长
     ///   - locationManager: 定位管理器，如果是室内运动如室内跑步、室内散步等不需要GPS功能的则不传
-    public required init(stepLength: Double, locationManager: GPSTrainingLocationManager? = nil) {
+    public required init(stepLength: Double, isLocationRequird: Bool = false) {
         self.stepLength = stepLength
-        super.init(locationManager: locationManager)
+        super.init(isLocationRequird: isLocationRequird)
     }
     
     /// 手动设置心率
@@ -33,7 +33,7 @@ open class WatchProvider: BaseProvider {
     public override func setSteps(_ steps: Int) {
         super.setSteps(steps)
         self.stepsHandler?(steps)
-        if !isGPSRequird {
+        if !isLocationRequird {
             let distance = Double(steps) * stepLength * 1.2
             self.distanceHandler?(distance)
         }

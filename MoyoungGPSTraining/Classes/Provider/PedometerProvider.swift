@@ -28,10 +28,9 @@ open class PedometerProvider: BaseProvider {
     /// 初始化方法
     /// - Parameters:
     ///   - weight: 体重
-    ///   - locationManager: 定位管理器，如果是室内运动如室内跑步、室内散步等不需要GPS功能的则不传
-    public required init(weight: Double, locationManager: GPSTrainingLocationManager? = nil) {
+    public required init(weight: Double, isLocationRequird: Bool = false) {
         self.weight = weight
-        super.init(locationManager: locationManager)
+        super.init(isLocationRequird: isLocationRequird)
     }
     
     /// 手动设置心率
@@ -105,7 +104,7 @@ open class PedometerProvider: BaseProvider {
         super.syncGPSData()
         
         // 如果是GPS类型运动，使用GPS距离计算卡路里
-        if isGPSRequird {
+        if isLocationRequird {
             self.calorieHandler?(self.getCalorie(from: self.gpsDistance))
         }
     }
@@ -113,7 +112,7 @@ open class PedometerProvider: BaseProvider {
     private func syncPedometerData() {
         self.stepsHandler?(self.pedometerSteps)
         // 如果有是GPS类型的运动，距离一律使用Gps的数据
-        if !isGPSRequird {
+        if !isLocationRequird {
             self.distanceHandler?(self.pedometerDistance)
             self.calorieHandler?(self.pedometerCalorie)
             self.speedHandler?(self.pedometerSpeed)
