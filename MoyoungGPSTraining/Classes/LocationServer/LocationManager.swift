@@ -10,9 +10,6 @@ import CoreLocation
 
 public class LocationManager: NSObject {
 
-    /// 水平过滤精度
-    public var horizontalAccuracy: Double = 50.0
-
     /// 坐标信任评估
     public var coordinateAssessor: TrustAssessor?
 
@@ -146,9 +143,7 @@ extension LocationManager: CLLocationManagerDelegate {
         for location in locations {
         
             // new location is too soon, and not better than previous? skip it
-            if let last = lastLocation,
-               location.horizontalAccuracy < self.horizontalAccuracy,
-               last.timestamp.age < 1.1 {
+            if let last = lastLocation, last.horizontalAccuracy <= location.horizontalAccuracy, last.timestamp.age < 1.1 {
                 continue
             }
             
@@ -157,6 +152,7 @@ extension LocationManager: CLLocationManagerDelegate {
             CLGeocoder().reverseGeocodeLocation(location) { (placemarks: [CLPlacemark]?, error: Error?) in
                 // 有可能为空或失败
                 guard let placemark = placemarks?.first, error == nil else {
+                    self.wgsWorkGroup.leave()
                     return
                 }
                 let countryCode = placemark.isoCountryCode
