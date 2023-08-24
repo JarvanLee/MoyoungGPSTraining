@@ -13,6 +13,9 @@ public class LocationManager: NSObject {
     /// 坐标信任评估
     public var coordinateAssessor: TrustAssessor?
 
+    /// 最大水平精度
+    public var maximumHorizontalAccuracy = 40.0
+
     /// 当前授权状态
     public var currentAuthorizationStatus: CLAuthorizationStatus {
         if #available(iOS 14.0, *) {
@@ -79,7 +82,6 @@ public class LocationManager: NSObject {
     }
 
     internal var lastLocation: CLLocation?
-    internal let wgsWorkGroup = DispatchGroup()
 }
 
 extension LocationManager: CLLocationManagerDelegate {
@@ -142,52 +144,28 @@ extension LocationManager: CLLocationManagerDelegate {
         var addedLocations = false
         for location in locations {
         
-            // new location is too soon, and not better than previous? skip it
-            if let last = lastLocation, last.horizontalAccuracy <= location.horizontalAccuracy, last.timestamp.age < 1.1 {
+            guard location.horizontalAccuracy < maximumHorizontalAccuracy else {
                 continue
             }
             
-            self.wgsWorkGroup.enter()
-            
-            CLGeocoder().reverseGeocodeLocation(location) { (placemarks: [CLPlacemark]?, error: Error?) in
-                // 有可能为空或失败
-                guard let placemark = placemarks?.first, error == nil else {
-                    self.wgsWorkGroup.leave()
-                    return
-                }
-                let countryCode = placemark.isoCountryCode
-                let isWGS = countryCode == "CN" || countryCode == "HK" || countryCode == "MO"
-                
-                var coordinate = location.coordinate
-                if isWGS {
-                    coordinate = coordinate.transformFormWGSToGCJ()
-                }
-
-                let newLocation = CLLocation(coordinate: coordinate,
-                                             altitude: location.altitude,
-                                             horizontalAccuracy: location.horizontalAccuracy,
-                                             verticalAccuracy: location.verticalAccuracy,
-                                             course: location.course,
-                                             speed: location.speed,
-                                             timestamp: location.timestamp)
-                
-                self.lastLocation = newLocation
-                
-                if let trustFactor = self.coordinateAssessor?.trustFactorFor(newLocation.coordinate) {
-                    ActivityBrain.highlander.add(rawLocation: newLocation, trustFactor: trustFactor)
-                } else {
-                    ActivityBrain.highlander.add(rawLocation: newLocation)
-                }
-
-                addedLocations = true
-                self.wgsWorkGroup.leave()
+            // new location is too soon, and not better than previous? skip it
+            if let last = lastLocation,
+               last.horizontalAccuracy <= location.horizontalAccuracy,
+                last.timestamp.age < 1.1 {
+                continue
             }
+            
+            if let trustFactor = self.coordinateAssessor?.trustFactorFor(location.coordinate) {
+                ActivityBrain.highlander.add(rawLocation: location, trustFactor: trustFactor)
+            } else {
+                ActivityBrain.highlander.add(rawLocation: location)
+            }
+
+            addedLocations = true
         }
         
-        self.wgsWorkGroup.notify(queue: .main) {
-            if addedLocations {
-                self.updateAndNotify()
-            }
+        if addedLocations {
+            self.updateAndNotify()
         }
     }
     

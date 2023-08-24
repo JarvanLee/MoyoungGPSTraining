@@ -82,9 +82,31 @@ open class BaseProvider: NSObject {
             when(loco, does: .locationDidUpdateLocation) { [weak self] _ in
                 guard let `self` = self else { return }
                 if let location = loco.locomotionSample().location {
-                    self.locations.append(location)
-                    self.trainingLines.last?.add(location: location)
-                    self.syncGPSData()
+                    
+                    CLGeocoder().reverseGeocodeLocation(location) { (placemarks: [CLPlacemark]?, error: Error?) in
+                        // 有可能为空或失败
+                        guard let placemark = placemarks?.first, error == nil else {
+                            return
+                        }
+                        let countryCode = placemark.isoCountryCode
+                        let isWGS = countryCode == "CN" || countryCode == "HK" || countryCode == "MO"
+                        
+                        var coordinate = location.coordinate
+                        if isWGS {
+                            coordinate = coordinate.transformFormWGSToGCJ()
+                        }
+
+                        let newLocation = CLLocation(coordinate: coordinate,
+                                                     altitude: location.altitude,
+                                                     horizontalAccuracy: location.horizontalAccuracy,
+                                                     verticalAccuracy: location.verticalAccuracy,
+                                                     course: location.course,
+                                                     speed: location.speed,
+                                                     timestamp: location.timestamp)
+                        self.locations.append(newLocation)
+                        self.trainingLines.last?.add(location: newLocation)
+                        self.syncGPSData()
+                    }
                 }
             }
             when(loco, does: .locationDidUpdateHeadingAngle) { [weak self] note in

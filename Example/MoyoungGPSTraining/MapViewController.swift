@@ -220,6 +220,13 @@ extension MapViewController: RunnerDelegate {
         progressView.progress = Float(progress.fractionCompleted)
     }
     
+    func runner(_ runner: Runner, didUpdateTimeLine line: GPSTrainingLine) {
+        print("@@@@@=======================================================")
+        for location in line.locations {
+            print("@@@@@===========\(location.debugDescription)")
+        }
+    }
+    
     func runner(_ runner: Runner, didUpdateLocations locations: [CLLocation]) {
         if let last = locations.last {
             self.coordinateArray.append(last.coordinate)
