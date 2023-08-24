@@ -50,7 +50,7 @@ open class BaseProvider: NSObject {
         return self.locationManager != nil
     }
     
-    public private(set) var locationManager: GPSTrainingLocationManager?
+    public let locationManager: GPSTrainingLocationManager?
     public private(set) var locations: [CLLocation] = []
     public private(set) var trainingLines: [GPSTrainingLine] = []
     
@@ -114,9 +114,7 @@ open class BaseProvider: NSObject {
     open func stop() {
         if self.isGPSRequird {
             self.locationManager?.stopUpdating()
-            self.locationManager = nil
             self.locations = []
-            self.trainingLines = []
         }
     }
     
