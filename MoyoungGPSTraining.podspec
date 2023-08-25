@@ -8,17 +8,17 @@
 
 Pod::Spec.new do |s|
   s.name             = 'MoyoungGPSTraining'
-  s.version          = '0.1.4'
+  s.version          = '0.1.5'
   s.summary          = 'A short description of MoyoungGPSTraining.'
 
   s.description      = <<-DESC
 TODO: Add long description of the pod here.
                        DESC
 
-  s.homepage         = 'https://github.com/李然/MoyoungGPSTraining'
+  s.homepage         = 'https://codeup.aliyun.com/5f53a99c6207a1a8b17fadc3/MoyoungGPSTraining'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
-  s.author           = { '李然' => 'zoro@moyoung.com' }
-  s.source           = { :git => 'https://github.com/李然/MoyoungGPSTraining.git', :tag => s.version.to_s }
+  s.author           = { 'JarvanLee' => 'zoro@moyoung.com' }
+  s.source           = { :git => 'https://codeup.aliyun.com/5f53a99c6207a1a8b17fadc3/MoyoungGPSTraining.git', :tag => s.version.to_s }
   s.ios.deployment_target = '10.0'
 
   s.source_files = 'MoyoungGPSTraining/Classes/**/*'
