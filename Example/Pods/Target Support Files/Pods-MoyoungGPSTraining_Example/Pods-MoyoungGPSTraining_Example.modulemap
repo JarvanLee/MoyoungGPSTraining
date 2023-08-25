@@ -1,0 +1,6 @@
+framework module Pods_MoyoungGPSTraining_Example {
+  umbrella header "Pods-MoyoungGPSTraining_Example-umbrella.h"
+
+  export *
+  module * { export * }
+}

@@ -220,10 +220,12 @@
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-MoyoungGPSTraining_Example/Pods-MoyoungGPSTraining_Example-frameworks.sh",
 				"${BUILT_PRODUCTS_DIR}/MoyoungGPSTraining/MoyoungGPSTraining.framework",
+				"${BUILT_PRODUCTS_DIR}/TQLocationConverter/TQLocationConverter.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/MoyoungGPSTraining.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/TQLocationConverter.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;

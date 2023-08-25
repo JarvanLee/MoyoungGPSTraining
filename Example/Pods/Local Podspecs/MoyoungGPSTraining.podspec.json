@@ -1,0 +1,28 @@
+{
+  "name": "MoyoungGPSTraining",
+  "version": "0.1.4",
+  "summary": "A short description of MoyoungGPSTraining.",
+  "description": "TODO: Add long description of the pod here.",
+  "homepage": "https://github.com/李然/MoyoungGPSTraining",
+  "license": {
+    "type": "MIT",
+    "file": "LICENSE"
+  },
+  "authors": {
+    "李然": "zoro@moyoung.com"
+  },
+  "source": {
+    "git": "https://github.com/李然/MoyoungGPSTraining.git",
+    "tag": "0.1.4"
+  },
+  "platforms": {
+    "ios": "10.0"
+  },
+  "source_files": "MoyoungGPSTraining/Classes/**/*",
+  "frameworks": "CoreLocation",
+  "dependencies": {
+    "TQLocationConverter": [
+
+    ]
+  }
+}

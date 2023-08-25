@@ -1,0 +1,6 @@
+framework module MoyoungGPSTraining {
+  umbrella header "MoyoungGPSTraining-umbrella.h"
+
+  export *
+  module * { export * }
+}

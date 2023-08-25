@@ -1,0 +1,23 @@
+PODS:
+  - MoyoungGPSTraining (0.1.4):
+    - TQLocationConverter
+  - TQLocationConverter (0.0.1)
+
+DEPENDENCIES:
+  - MoyoungGPSTraining (from `../`)
+
+SPEC REPOS:
+  trunk:
+    - TQLocationConverter
+
+EXTERNAL SOURCES:
+  MoyoungGPSTraining:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  MoyoungGPSTraining: 8f5bebb0c3e11a20a9819251e66738810f281fc0
+  TQLocationConverter: ddbd1412c84af6c1f8dcc710e8b67329a922d426
+
+PODFILE CHECKSUM: 50d369c43ae0bb37642f0582353b4f4ac1a5ad38
+
+COCOAPODS: 1.12.1

@@ -1,0 +1,6 @@
+framework module TQLocationConverter {
+  umbrella header "TQLocationConverter-umbrella.h"
+
+  export *
+  module * { export * }
+}
