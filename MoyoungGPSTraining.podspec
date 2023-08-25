@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'MoyoungGPSTraining'
-  s.version          = '0.1.0'
+  s.version          = '0.1.4'
   s.summary          = 'A short description of MoyoungGPSTraining.'
 
   s.description      = <<-DESC
@@ -24,4 +24,6 @@ TODO: Add long description of the pod here.
   s.source_files = 'MoyoungGPSTraining/Classes/**/*'
 
   s.frameworks = 'CoreLocation'
+  s.dependency 'TQLocationConverter'
+  
 end

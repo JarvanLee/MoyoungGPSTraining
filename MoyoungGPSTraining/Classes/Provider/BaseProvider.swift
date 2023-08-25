@@ -7,6 +7,7 @@
 
 import Foundation
 import CoreLocation
+import TQLocationConverter
 
 public typealias IntHandler = (_ value: Int) -> Void
 public typealias DoubleHandler = (_ value: Double) -> Void
@@ -84,28 +85,28 @@ open class BaseProvider: NSObject {
                 if let location = loco.locomotionSample().location {
                     
                     CLGeocoder().reverseGeocodeLocation(location) { (placemarks: [CLPlacemark]?, error: Error?) in
-                        // 有可能为空或失败
-                        guard let placemark = placemarks?.first, error == nil else {
-                            return
-                        }
-                        let countryCode = placemark.isoCountryCode
-                        let isWGS = countryCode == "CN" || countryCode == "HK" || countryCode == "MO"
                         
-                        var coordinate = location.coordinate
-                        if isWGS {
-                            coordinate = coordinate.transformFormWGSToGCJ()
+                        var isChina = false
+                        
+                        if let placemark = placemarks?.first {
+                            let countryCode = placemark.isoCountryCode
+                            isChina = countryCode == "CN" || countryCode == "HK" || countryCode == "MO"
+                        } else {
+                            isChina = !TQLocationConverter.isLocationOut(ofChina: location.coordinate)
                         }
-
-                        let newLocation = CLLocation(coordinate: coordinate,
-                                                     altitude: location.altitude,
-                                                     horizontalAccuracy: location.horizontalAccuracy,
-                                                     verticalAccuracy: location.verticalAccuracy,
-                                                     course: location.course,
-                                                     speed: location.speed,
-                                                     timestamp: location.timestamp)
-                        self.locations.append(newLocation)
-                        self.trainingLines.last?.add(location: newLocation)
-                        self.syncGPSData()
+                        if isChina {
+                            let coordinate = TQLocationConverter.transformFromWGS(toGCJ: location.coordinate)
+                            let newLocation = CLLocation(coordinate: coordinate,
+                                                         altitude: location.altitude,
+                                                         horizontalAccuracy: location.horizontalAccuracy,
+                                                         verticalAccuracy: location.verticalAccuracy,
+                                                         course: location.course,
+                                                         speed: location.speed,
+                                                         timestamp: location.timestamp)
+                            self.addNewLocation(newLocation)
+                        } else {
+                            self.addNewLocation(location)
+                        }
                     }
                 }
             }
@@ -208,5 +209,11 @@ open class BaseProvider: NSObject {
                 self.trainingLineHandler?(line)
             }
         }
+    }
+    
+    private func addNewLocation(_ location: CLLocation) {
+        self.locations.append(location)
+        self.trainingLines.last?.add(location: location)
+        self.syncGPSData()
     }
 }
