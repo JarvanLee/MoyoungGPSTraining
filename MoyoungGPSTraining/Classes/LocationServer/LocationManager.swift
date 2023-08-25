@@ -74,6 +74,7 @@ public class LocationManager: NSObject {
         }
         locationManager.stopUpdatingLocation()
         locationManager.stopUpdatingHeading()
+        ActivityBrain.highlander.freezeTheBrain()
     }
 
     /// 暂停定位
