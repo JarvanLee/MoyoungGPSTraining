@@ -158,6 +158,7 @@ public extension Runner {
         
         if timer == nil {
             timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(timerRun), userInfo: nil, repeats: true)
+            RunLoop.current.add(timer!, forMode: .common)
         }
     }
     
@@ -188,13 +189,13 @@ public extension Runner {
 extension Runner {
     /// 计时器
     @objc private func timerRun() {
-        if Int(Date().timeIntervalSince1970) % 60 == 0 {
-            calculateMinuteData()
-        }
-        
+    
         switch runState {
         case .running:
             run.totalValidDuration += 1
+            if Int(run.totalValidDuration) % 60 == 0 {
+                calculateMinuteData()
+            }
             calculateGoalProgress()
             calculateTimePerKilometreAndMile()
             calculateRealTimeData()
