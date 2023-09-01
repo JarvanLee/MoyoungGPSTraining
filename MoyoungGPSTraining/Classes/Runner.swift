@@ -117,9 +117,10 @@ public extension Runner {
             self.run.minHeart = min(value, self.run.minHeart ?? 255)
             self.currentHearts.append(value)
         }
-        provider.altitudeListHandler = { [weak self] value in
+        provider.altitudeHandler = { [weak self] (total, detail) in
             guard let `self` = self else { return }
-            self.altitudeArray = value
+            self.altitudeArray = detail
+            self.run.climbingHeight = total
         }
         provider.locationsHander = { [weak self] value in
             guard let `self` = self else { return }
@@ -179,7 +180,6 @@ public extension Runner {
         calculateMinuteData()
         calculateTimePerKilometreAndMile()
         calculateRealTimeData()
-        stopedCalculate()
         delegate?.runner(self, didUpdateRun: run)
     }
 }
@@ -321,11 +321,6 @@ extension Runner {
                 run.realTimeElevation.append(last)
             }
         }
-    }
-    
-    /// 运动结束时需要计算的一些数据
-    private func stopedCalculate() {
-        run.climbingHeight = provider?.calculateElevation() ?? 0.0
     }
     
     private func reset() {

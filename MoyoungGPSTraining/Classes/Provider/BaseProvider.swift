@@ -37,8 +37,8 @@ open class BaseProvider: NSObject {
     public var headingAngleHandler: DoubleHandler?
     // 信号强度
     public var locationSingleHandler: LocationSingleHandler?
-    // 爬升高度数组
-    public var altitudeListHandler: DoubleListHandler?
+    // 爬升高度
+    public var altitudeHandler: ((_ total: Double, _ detail: [Double]) -> Void)?
     // 距离（可能是GPS，可能是手机计步器）
     public var distanceHandler: DoubleHandler?
     // 瞬时速度（可能是GPS，可能是手机计步器）
@@ -148,7 +148,6 @@ open class BaseProvider: NSObject {
     open func stop() {
         if self.isLocationRequird {
             LocationManager.shared.stopUpdating()
-            self.locations = []
         }
     }
     
@@ -204,7 +203,7 @@ open class BaseProvider: NSObject {
             self.distanceHandler?(self.gpsDistance)
             self.speedHandler?(self.gpsCurrentSpeed)
             self.locationsHander?(self.locations)
-            self.altitudeListHandler?(self.locations.map { $0.altitude })
+            self.altitudeHandler?(self.calculateElevation() ?? 0.0, self.locations.map { $0.altitude })
             if let line = self.trainingLines.last {
                 self.trainingLineHandler?(line)
             }
